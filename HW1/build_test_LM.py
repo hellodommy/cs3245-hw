@@ -20,16 +20,93 @@ def build_LM(in_file):
     print("building language models...")
     # This is an empty method
     # Pls implement your code below
-    f = open(in_file, "r")
-    file_contents = f.read()
-    
-    for line in file_contents:
-        print('hello')
-        print(line)
-    
-    #print(list(ngrams(file_contents, 4)))
 
 
+    malay_dict = {}
+    indo_dict = {}
+    tamil_dict = {}
+
+    malay_count = 0
+    indo_count = 0
+    tamil_count = 0
+
+    f = open(in_file, 'r')
+
+    lines = f.readlines()
+
+    for line in lines:
+        lang = line.split(' ', 1)[0].strip()
+        sentence = line.split(' ', 1)[1].rstrip()
+        tokens = list(ngrams(sentence, 4))
+        for token in tokens:
+            if lang == 'tamil':
+                count = tamil_dict.get(token, 0)
+                new_count = count + 1
+                tamil_dict[token] = new_count
+                tamil_count += 1
+            if lang == 'malaysian':
+                count = malay_dict.get(token, 0)
+                new_count = count + 1
+                malay_dict[token] = new_count
+                malay_count += 1
+            if lang == 'indonesian':
+                count = indo_dict.get(token, 0)
+                new_count = count + 1
+                indo_dict[token] = new_count
+                indo_count += 1
+
+    malay_dict, indo_dict, tamil_dict, malay_count, indo_count, tamil_count = smoothing(malay_dict, indo_dict, tamil_dict, malay_count, indo_count, tamil_count)
+    
+    print("malay dict:", malay_dict)
+    print("malay count:", malay_count)
+    print("indo dict:", indo_dict)
+    print("indo count:", indo_count)
+    print("tamil dict:", tamil_dict)
+    print("tamil count:", tamil_count)
+
+
+def smoothing(malay_dict, indo_dict, tamil_dict, malay_count, indo_count, tamil_count):
+    # Add one to existing
+    for key in tamil_dict:
+        count = tamil_dict.get(key)
+        new_count = count + 1
+        tamil_dict[key] = new_count
+        tamil_count += 1
+    for key in malay_dict:
+        count = malay_dict.get(key)
+        new_count = count + 1
+        malay_dict[key] = new_count
+        malay_count += 1
+    for key in indo_dict:
+        count = indo_dict.get(key)
+        new_count = count + 1
+        indo_dict[key] = new_count
+        indo_count += 1
+    # Add ones not existing
+    for key in tamil_dict:
+        if key not in malay_dict:
+            malay_dict[key] = 1
+            malay_count += 1
+        if key not in indo_dict:
+            indo_dict[key] = 1
+            indo_count += 1
+    for key in malay_dict:
+        if key not in tamil_dict:
+            tamil_dict[key] = 1
+            tamil_count += 1
+        if key not in indo_dict:
+            indo_dict[key] = 1
+            indo_count += 1
+    for key in indo_dict:
+        if key not in malay_dict:
+            malay_dict[key] = 1
+            malay_count += 1
+        if key not in tamil_dict:
+            tamil_dict[key] = 1
+            tamil_count += 1
+
+    return malay_dict, indo_dict, tamil_dict, malay_count, indo_count, tamil_count
+    
 def test_LM(in_file, out_file, LM):
     """
     test the language models on new strings

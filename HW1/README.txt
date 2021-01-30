@@ -2,7 +2,7 @@ This is the README file for A0000000X's submission
 
 == Python Version ==
 
-I'm (We're) using Python Version <3.7.6 or replace version number> for
+I'm (We're) using Python Version 3.7.3 for
 this assignment.
 
 == General Notes about this assignment ==
