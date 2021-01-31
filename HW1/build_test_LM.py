@@ -66,7 +66,7 @@ def build_LM(in_file):
 
 
 def smoothing(malay_dict, indo_dict, tamil_dict, malay_count, indo_count, tamil_count):
-    # Add one to existing
+    # Add one to existing tokens
     for key in tamil_dict:
         count = tamil_dict.get(key)
         new_count = count + 1
@@ -82,7 +82,7 @@ def smoothing(malay_dict, indo_dict, tamil_dict, malay_count, indo_count, tamil_
         new_count = count + 1
         indo_dict[key] = new_count
         indo_count += 1
-    # Add ones not existing
+    # Add tokens that do not exist
     for key in tamil_dict:
         if key not in malay_dict:
             malay_dict[key] = 1
