@@ -26,10 +26,6 @@ def build_LM(in_file):
     indo_dict = {}
     tamil_dict = {}
 
-    malay_count = 0
-    indo_count = 0
-    tamil_count = 0
-
     f = open(in_file, 'r')
 
     lines = f.readlines()
@@ -43,64 +39,59 @@ def build_LM(in_file):
                 count = tamil_dict.get(token, 0)
                 new_count = count + 1
                 tamil_dict[token] = new_count
-                tamil_count += 1
             if lang == 'malaysian':
                 count = malay_dict.get(token, 0)
                 new_count = count + 1
                 malay_dict[token] = new_count
-                malay_count += 1
             if lang == 'indonesian':
                 count = indo_dict.get(token, 0)
                 new_count = count + 1
                 indo_dict[token] = new_count
-                indo_count += 1
 
-    malay_dict, indo_dict, tamil_dict, malay_count, indo_count, tamil_count = smoothing(malay_dict, indo_dict, tamil_dict, malay_count, indo_count, tamil_count)
+    malay_dict, indo_dict, tamil_dict = smoothing(malay_dict, indo_dict, tamil_dict)
     
-    return [malay_dict, indo_dict, tamil_dict, malay_count, indo_count, tamil_count]
+    return [malay_dict, indo_dict, tamil_dict]
 
-def smoothing(malay_dict, indo_dict, tamil_dict, malay_count, indo_count, tamil_count):
+def smoothing(malay_dict, indo_dict, tamil_dict):
     # Add one to existing tokens
-    for key in tamil_dict:
-        count = tamil_dict.get(key)
-        new_count = count + 1
-        tamil_dict[key] = new_count
-        tamil_count += 1
     for key in malay_dict:
         count = malay_dict.get(key)
         new_count = count + 1
         malay_dict[key] = new_count
-        malay_count += 1
     for key in indo_dict:
         count = indo_dict.get(key)
         new_count = count + 1
         indo_dict[key] = new_count
-        indo_count += 1
-    # Add tokens that do not exist
     for key in tamil_dict:
-        if key not in malay_dict:
-            malay_dict[key] = 1
-            malay_count += 1
-        if key not in indo_dict:
-            indo_dict[key] = 1
-            indo_count += 1
+        count = tamil_dict.get(key)
+        new_count = count + 1
+        tamil_dict[key] = new_count
+
+    # Add tokens that do not exist
     for key in malay_dict:
         if key not in tamil_dict:
             tamil_dict[key] = 1
-            tamil_count += 1
         if key not in indo_dict:
             indo_dict[key] = 1
-            indo_count += 1
     for key in indo_dict:
         if key not in malay_dict:
             malay_dict[key] = 1
-            malay_count += 1
         if key not in tamil_dict:
             tamil_dict[key] = 1
-            tamil_count += 1
+    for key in tamil_dict:
+        if key not in malay_dict:
+            malay_dict[key] = 1
+        if key not in indo_dict:
+            indo_dict[key] = 1
 
-    return malay_dict, indo_dict, tamil_dict, malay_count, indo_count, tamil_count
-    
+    return malay_dict, indo_dict, tamil_dict
+
+def get_counts(malay_dict, indo_dict, tamil_dict):
+    malay_count = sum(malay_dict.values())
+    indo_count = sum(indo_dict.values())
+    tamil_count = sum(tamil_dict.values())
+    return malay_count, indo_count, tamil_count
+
 def test_LM(in_file, out_file, LM):
     """
     test the language models on new strings
@@ -111,10 +102,8 @@ def test_LM(in_file, out_file, LM):
     # This is an empty method
     # Pls implement your code below
 
-
-    malay_dict, indo_dict, tamil_dict, malay_count, indo_count, tamil_count = LM[0], LM[1], LM[2], LM[3], LM[4], LM[5]
-    #print("malay count:", malay_count)
-    #print("malay dict:", malay_dict)
+    malay_dict, indo_dict, tamil_dict = LM[0], LM[1], LM[2]
+    malay_count, indo_count, tamil_count = get_counts(malay_dict, indo_dict, tamil_dict)
 
     read = open(in_file, 'r')
     result = open(out_file, "x")
@@ -124,7 +113,6 @@ def test_LM(in_file, out_file, LM):
     for line in lines:
         sentence = line.rstrip().lower()
         tokens = list(ngrams(sentence, 4))
-        #print("given tokens:", tokens)
         malay_prob = indo_prob = tamil_prob = 1
         for token in tokens:
             if token in malay_dict:
@@ -136,12 +124,14 @@ def test_LM(in_file, out_file, LM):
             if token in tamil_dict:
                 tamil_freq = tamil_dict.get(token)
                 tamil_prob *= tamil_freq / tamil_count
+                #print(tamil_prob)
 
         # Find the highest probability
         # if malay_prob == 0 and indo_prob == 0 and tamil_prob == 0:
         #     result.write("other " + line)
         # else:
-        probabilities = {'malaysian': malay_prob,'indonesian': indo_prob, 'tamil': tamil_freq}
+        probabilities = {'malaysian': malay_prob,'indonesian': indo_prob, 'tamil': tamil_prob}
+        print(probabilities)
         result.write(max(probabilities, key=probabilities.get) + " " + line)
 
     result.close()
