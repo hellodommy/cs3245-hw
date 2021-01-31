@@ -1,5 +1,4 @@
 #!/usr/bin/python3
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -115,23 +114,28 @@ def test_LM(in_file, out_file, LM):
         tokens = list(ngrams(sentence, 4))
         malay_prob = indo_prob = tamil_prob = 1
         for token in tokens:
+            print("before", malay_prob)
             if token in malay_dict:
+                print(token)
                 malay_freq = malay_dict.get(token)
+                print(malay_freq)
                 malay_prob *= malay_freq / malay_count
+                print("after", malay_prob)
             if token in indo_dict:
                 indo_freq = indo_dict.get(token)
                 indo_prob *= indo_freq / indo_count
             if token in tamil_dict:
                 tamil_freq = tamil_dict.get(token)
                 tamil_prob *= tamil_freq / tamil_count
+            #print(token)
+            
                 #print(tamil_prob)
-
         # Find the highest probability
         # if malay_prob == 0 and indo_prob == 0 and tamil_prob == 0:
         #     result.write("other " + line)
         # else:
         probabilities = {'malaysian': malay_prob,'indonesian': indo_prob, 'tamil': tamil_prob}
-        print(probabilities)
+        #print(probabilities)
         result.write(max(probabilities, key=probabilities.get) + " " + line)
 
     result.close()
