@@ -25,7 +25,7 @@ def build_LM(in_file):
     indo_dict = {}
     tamil_dict = {}
 
-    f = open(in_file, 'r')
+    f = open(in_file, 'r', encoding="utf-8")
 
     lines = f.readlines()
 
@@ -101,7 +101,7 @@ def test_LM(in_file, out_file, LM):
     malay_dict, indo_dict, tamil_dict = LM[0], LM[1], LM[2]
     malay_count, indo_count, tamil_count = get_counts(malay_dict, indo_dict, tamil_dict)
 
-    read = open(in_file, 'r')
+    read = open(in_file, 'r', encoding="utf-8")
     result = open(out_file, "x")
 
     lines = read.readlines()
