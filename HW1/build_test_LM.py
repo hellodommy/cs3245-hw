@@ -130,7 +130,6 @@ def test_LM(in_file, out_file, LM):
             result.write("other " + line)
         else:
             probabilities = {'malaysian': malay_prob,'indonesian': indo_prob, 'tamil': tamil_prob}
-            print(probabilities)
             result.write(min(probabilities, key=probabilities.get) + " " + line)
 
     result.close()
