@@ -8,6 +8,7 @@ import re
 import nltk
 import sys
 import getopt
+import math
 
 from nltk import ngrams
 
@@ -113,30 +114,31 @@ def test_LM(in_file, out_file, LM):
         sentence = line.rstrip().lower()
         tokens = list(ngrams(sentence, 4))
         malay_prob = indo_prob = tamil_prob = 1
+        unseen_count = 0
         for token in tokens:
-            print("before", malay_prob)
+            #print("before", malay_prob)
             if token in malay_dict:
-                print(token)
+                #print(token)
                 malay_freq = malay_dict.get(token)
-                print(malay_freq)
-                malay_prob *= malay_freq / malay_count
-                print("after", malay_prob)
+                #print(malay_freq)
+                malay_prob *= math.log10(malay_freq / malay_count)
+                #print("after", malay_prob)
             if token in indo_dict:
                 indo_freq = indo_dict.get(token)
-                indo_prob *= indo_freq / indo_count
+                indo_prob *= math.log10(indo_freq / indo_count)
             if token in tamil_dict:
                 tamil_freq = tamil_dict.get(token)
-                tamil_prob *= tamil_freq / tamil_count
-            #print(token)
-            
-                #print(tamil_prob)
+                tamil_prob *= math.log10(tamil_freq / tamil_count)
+            if token not in malay_dict and token not in indo_dict and token not in tamil_dict:
+                unseen_count += 1
+
         # Find the highest probability
-        # if malay_prob == 0 and indo_prob == 0 and tamil_prob == 0:
-        #     result.write("other " + line)
-        # else:
-        probabilities = {'malaysian': malay_prob,'indonesian': indo_prob, 'tamil': tamil_prob}
-        #print(probabilities)
-        result.write(max(probabilities, key=probabilities.get) + " " + line)
+        percentage_unseen = unseen_count / len(tokens) # percentage of tokens that are unseen in any dictionary
+        if percentage_unseen > 0.5: # threshold set at 0.75
+            result.write("other " + line)
+        else:
+            probabilities = {'malaysian': malay_prob,'indonesian': indo_prob, 'tamil': tamil_prob}
+            result.write(max(probabilities, key=probabilities.get) + " " + line)
 
     result.close()
 
