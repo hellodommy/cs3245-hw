@@ -20,11 +20,7 @@ def build_index(in_dir, out_dict, out_postings):
     # Pls implement your code in below
     stemmer = PorterStemmer()
     punc = string.punctuation
-    stopwords_path = os.path.join(in_dir, '../stopwords')
-    stopwords = []
-    with open(stopwords_path, 'r') as file:
-        stopwords = [line.rstrip('\n') for line in file]
-
+    index = {}
     for entry in os.listdir(in_dir):
         full_path = os.path.join(in_dir, entry)
         if os.path.isfile(full_path) and not entry.startswith('.'):
@@ -32,10 +28,18 @@ def build_index(in_dir, out_dict, out_postings):
                 data = file.read().replace('\n', '') # string data for each document
                 for sent in sent_tokenize(data):
                     for word in word_tokenize(sent):
-                        if word not in punc and word not in stopwords:
+                        if word not in punc:
                             case_fold = word.lower()
                             stemmed = stemmer.stem(case_fold)
-                            print(case_fold + " -> " + stemmed)
+                            if (stemmed not in index):
+                                index[stemmed] = [int(entry)]
+                            else:
+                                curr_posting_list = index[stemmed]
+                                if (int(entry) not in curr_posting_list):
+                                    curr_posting_list.append(int(entry));
+                                    index[stemmed] = curr_posting_list
+    print(index)
+
 
 input_directory = output_file_dictionary = output_file_postings = None
 
