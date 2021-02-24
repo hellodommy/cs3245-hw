@@ -1,8 +1,11 @@
 #!/usr/bin/python3
 import re
-import nltk
+from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk.stem.porter import *
 import sys
 import getopt
+import string
+import os
 
 def usage():
     print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
@@ -15,6 +18,24 @@ def build_index(in_dir, out_dict, out_postings):
     print('indexing...')
     # This is an empty method
     # Pls implement your code in below
+    stemmer = PorterStemmer()
+    punc = string.punctuation
+    stopwords_path = os.path.join(in_dir, '../stopwords')
+    stopwords = []
+    with open(stopwords_path, 'r') as file:
+        stopwords = [line.rstrip('\n') for line in file]
+
+    for entry in os.listdir(in_dir):
+        full_path = os.path.join(in_dir, entry)
+        if os.path.isfile(full_path) and not entry.startswith('.'):
+            with open(full_path, 'r') as file:
+                data = file.read().replace('\n', '') # string data for each document
+                for sent in sent_tokenize(data):
+                    for word in word_tokenize(sent):
+                        if word not in punc and word not in stopwords:
+                            case_fold = word.lower()
+                            stemmed = stemmer.stem(case_fold)
+                            print(case_fold + " -> " + stemmed)
 
 input_directory = output_file_dictionary = output_file_postings = None
 
