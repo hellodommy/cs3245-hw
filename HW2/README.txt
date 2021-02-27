@@ -46,3 +46,9 @@ https://realpython.com/working-with-files-in-python/
 
 Reading file line by line into list
 https://stackoverflow.com/questions/3277503/how-to-read-a-file-line-by-line-into-a-list#comment44278184_3277516
+
+Read list in chunks
+https://geeksforgeeks.org/break-list-chunks-size-n-python/
+
+Using a global variable in Python
+https://vbsreddy1.medium.com/unboundlocalerror-when-the-variable-has-a-value-in-python-e34e097547d6

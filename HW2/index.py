@@ -8,6 +8,9 @@ import string
 import os
 import _pickle as pickle
 
+punc = string.punctuation
+block_count = 0
+
 def usage():
     print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
 
@@ -19,41 +22,44 @@ def build_index(in_dir, out_dict, out_postings):
     print('indexing...')
     # This is an empty method
     # Pls implement your code in below
-    stemmer = PorterStemmer()
-    punc = string.punctuation
-    index = {}
+    os.makedirs('blocks', exist_ok=True)
     limit = 5
-    fileCount = 0
-    blockCount = 1
-    runningCount = 0
     doc_list = os.listdir(in_dir)
-    for entry in doc_list:
-        runningCount += 1
-        fileCount += 1
+    doc_chunks = [doc_list[i * limit:(i + 1) * limit] for i in range((len(doc_list) + limit - 1) // limit)]
+    for chunk in doc_chunks:
+        spimi_invert(chunk, in_dir)
+
+def tokenize(word):
+    stemmer = PorterStemmer()
+    word = word.lower()
+    word = stemmer.stem(word)
+    return word
+
+def spimi_invert(chunk, in_dir):
+    global block_count
+    block_count += 1
+    output_file = "block" + str(block_count) + ".txt"
+    index = {}
+    for entry in chunk:
         full_path = os.path.join(in_dir, entry)
-        if os.path.isfile(full_path) and not entry.startswith('.'):
-            with open(full_path, 'r') as file:
-                data = file.read().replace('\n', '') # string data for each document
-                for sent in sent_tokenize(data):
-                    for word in word_tokenize(sent):
-                        if word not in punc:
-                            case_fold = word.lower()
-                            stemmed = stemmer.stem(case_fold)
-                            if (stemmed not in index):
-                                index[stemmed] = [int(entry)]
-                            else:
-                                curr_posting_list = index[stemmed]
-                                if (int(entry) not in curr_posting_list):
-                                    curr_posting_list.append(int(entry));
-                                    index[stemmed] = curr_posting_list
-        if fileCount == limit or runningCount == len(doc_list):
-            newFileName = "block" + str(blockCount) + ".txt"
-            f = open(newFileName, "wb")
-            f.write(pickle.dumps(index))
-            f.close()
-            index = {}
-            fileCount = 0
-            blockCount += 1
+        if os.path.isfile(full_path):
+            file = open(full_path, "r")
+            doc = file.read().replace('\n', '')
+            for sent in sent_tokenize(doc):
+                for word in word_tokenize(sent):
+                    if word not in punc:
+                        tokenized = tokenize(word)
+                        if (tokenized not in index):
+                                index[tokenized] = [int(entry)]
+                        else:
+                            curr_posting_list = index[tokenized]
+                            if (int(entry) not in curr_posting_list):
+                                curr_posting_list.append(int(entry))
+                                index[tokenized] = curr_posting_list
+            file.close()
+    output = open(os.path.join('blocks', output_file), 'wb')
+    output.write(pickle.dumps(index))
+    output.close()
 
 input_directory = output_file_dictionary = output_file_postings = None
 

@@ -2,5 +2,5 @@
 
 import _pickle as pickle
 
-favorite_color = pickle.load(open("block2.txt", "rb"))
-print(type(favorite_color))
+file = pickle.load(open("blocks/block11.txt", "rb"))
+print(file)
