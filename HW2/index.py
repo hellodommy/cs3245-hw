@@ -57,8 +57,12 @@ def spimi_invert(chunk, in_dir):
                                 curr_posting_list.append(int(entry))
                                 index[tokenized] = curr_posting_list
             file.close()
+    for item in index:
+        index[item].sort()
+    index_items = index.items()
+    index_items = sorted(index_items)
     output = open(os.path.join('blocks', output_file), 'wb')
-    output.write(pickle.dumps(index))
+    output.write(pickle.dumps(index_items))
     output.close()
 
 input_directory = output_file_dictionary = output_file_postings = None
