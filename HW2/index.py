@@ -6,6 +6,7 @@ import sys
 import getopt
 import string
 import os
+import _pickle as pickle
 
 def usage():
     print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
@@ -21,7 +22,14 @@ def build_index(in_dir, out_dict, out_postings):
     stemmer = PorterStemmer()
     punc = string.punctuation
     index = {}
-    for entry in os.listdir(in_dir):
+    limit = 5
+    fileCount = 0
+    blockCount = 1
+    runningCount = 0
+    doc_list = os.listdir(in_dir)
+    for entry in doc_list:
+        runningCount += 1
+        fileCount += 1
         full_path = os.path.join(in_dir, entry)
         if os.path.isfile(full_path) and not entry.startswith('.'):
             with open(full_path, 'r') as file:
@@ -38,8 +46,14 @@ def build_index(in_dir, out_dict, out_postings):
                                 if (int(entry) not in curr_posting_list):
                                     curr_posting_list.append(int(entry));
                                     index[stemmed] = curr_posting_list
-    print(index)
-
+        if fileCount == limit or runningCount == len(doc_list):
+            newFileName = "block" + str(blockCount) + ".txt"
+            f = open(newFileName, "wb")
+            f.write(pickle.dumps(index))
+            f.close()
+            index = {}
+            fileCount = 0
+            blockCount += 1
 
 input_directory = output_file_dictionary = output_file_postings = None
 
