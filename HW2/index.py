@@ -7,9 +7,11 @@ import getopt
 import string
 import os
 import _pickle as pickle
+import math
 
 punc = string.punctuation
 block_count = 0
+max_len = 0
 
 def usage():
     print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
@@ -28,6 +30,7 @@ def build_index(in_dir, out_dict, out_postings):
     doc_chunks = [doc_list[i * limit:(i + 1) * limit] for i in range((len(doc_list) + limit - 1) // limit)]
     for chunk in doc_chunks:
         spimi_invert(chunk, in_dir)
+    merge(in_dir)
 
 def tokenize(word):
     stemmer = PorterStemmer()
@@ -37,6 +40,7 @@ def tokenize(word):
 
 def spimi_invert(chunk, in_dir):
     global block_count
+    global max_len
     block_count += 1
     output_file = "block" + str(block_count) + ".txt"
     index = {}
@@ -57,13 +61,51 @@ def spimi_invert(chunk, in_dir):
                                 curr_posting_list.append(int(entry))
                                 index[tokenized] = curr_posting_list
             file.close()
-    for item in index:
-        index[item].sort()
     index_items = index.items()
+    max_len = max(max_len, len(index_items))
+    for key, value in index_items:
+        value.sort()
     index_items = sorted(index_items)
     output = open(os.path.join('blocks', output_file), 'wb')
-    output.write(pickle.dumps(index_items))
+    for item in index_items:
+        pickle.dump(item, output)
     output.close()
+    merge("blocks")
+
+def merge(in_dir):
+    global max_len
+    limit = 5
+    loops = math.ceil(max_len / limit)
+    opened_files = []
+    # open all files and store in list
+    for entry in os.listdir(in_dir):
+        opened_files.append(open(os.path.join(in_dir, entry), 'rb'))
+    for i in range(loops):  # 1 reading of limit lines
+        unpickled = []
+        for opened_file in opened_files:
+            unpickler = pickle.Unpickler(opened_file)
+            for j in range(limit):
+                unpickled.append(unpickler.load())
+            # do the merge now
+        unpickled.sort()
+        # merge unpickled here
+        merge_unpickled = []
+        curr_term = ""
+        for unpickle in unpickled:
+            if unpickle[0] != curr_term:
+                merge_unpickled.append(unpickle)
+                curr_term = unpickle[0]
+            else:
+                last_index = len(merge_unpickled) - 1
+                temp_list = merge_unpickled[last_index][1]
+                temp_list.extend(unpickle[1])
+                temp_list.sort()
+                merge_unpickled[last_index] = [unpickle[0], temp_list]
+        # write out merge unpickled
+        #print(merge_unpickled)
+
+        #print(unpickled)
+        #print("__________\n")
 
 input_directory = output_file_dictionary = output_file_postings = None
 
