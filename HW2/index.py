@@ -8,6 +8,7 @@ import string
 import os
 import _pickle as pickle
 import math
+from queue import PriorityQueue
 
 punc = string.punctuation
 block_count = 0 # running count of the number of blocks
@@ -31,7 +32,11 @@ def build_index(in_dir, out_dict, out_postings):
     doc_chunks = [doc_list[i * limit:(i + 1) * limit] for i in range((len(doc_list) + limit - 1) // limit)]
     for chunk in doc_chunks:
         spimi_invert(chunk, in_dir)
-    merge(BLOCKS)
+    f = open(out_dict, 'w+')
+    f.close()
+    f = open(out_postings, 'w+')
+    f.close()
+    merge(BLOCKS, out_dict, out_postings)
 
 def tokenize(word):
     stemmer = PorterStemmer()
@@ -74,8 +79,8 @@ def write_block_to_disk(index, output_file):
     for item in index_items:
         pickle.dump(item, output)
     output.close()
-    
-def merge(in_dir):
+
+def merge(in_dir, out_dict, out_postings):
     global max_len
     limit = 5
     loops = math.ceil(max_len / limit)
@@ -84,36 +89,56 @@ def merge(in_dir):
     # open all files and store in list
     for entry in os.listdir(in_dir):
         opened_files[entry] = open(os.path.join(in_dir, entry), 'rb')
-    for i in range(loops):  # 1 reading of limit lines
-        unpickled = []
-        for key, value in opened_files.items():
-            unpickler = pickle.Unpickler(value)
-            for j in range(limit):
-                if key not in removed_files:
-                    try:
-                        unpickled.append(unpickler.load())
-                    except EOFError as error:
-                        removed_files.append(key)
-            # do the merge now
-        unpickled.sort()
-        # merge unpickled here
-        merge_unpickled = []
-        curr_term = ""
-        for unpickle in unpickled:
-            if unpickle[0] != curr_term:
-                merge_unpickled.append(unpickle)
-                curr_term = unpickle[0]
-            else:
-                last_index = len(merge_unpickled) - 1
-                temp_list = merge_unpickled[last_index][1]
-                temp_list.extend(unpickle[1])
-                temp_list.sort()
-                merge_unpickled[last_index] = [unpickle[0], temp_list]
-        # write out merge unpickled
-        #print(merge_unpickled)
+    pq = PriorityQueue()
+    # initialising PQ
+    for i in range(limit):
+        for block_name, file_read in opened_files.items():
+            unpickler = pickle.Unpickler(file_read)
+            if block_name not in removed_files:
+                try:
+                    temp_item = list(unpickler.load())
+                    # block where the item of (term, docID) is from
+                    temp_item.append(block_name)
+                    pq.put(temp_item)
+                except EOFError as error:
+                    removed_files.append(block_name)
+    term_to_write = ''
+    posting_list_to_write = []
+    offset = 0
+    while not pq.empty():
+        item = pq.get()
+        #print(item)
+        term, posting_list, block_name = item[0], item[1], item[2]
+        if term_to_write == '':  # first term we are processing
+            term_to_write = term
+            posting_list_to_write = posting_list
+        elif term_to_write != term:  # time to write our current term to to disk because we encountered a new term
+            posting_list_to_write.sort()
+            # (doc_frequency, absolute_offset, accumulative_offset)
+            dict_entry = term_to_write + " " + str(len(posting_list_to_write)) + " " + str(offset) + " " + str(len(str(posting_list_to_write))) + "\n"
+            write_to_file(out_dict, dict_entry)
+            write_to_file(out_postings, str(posting_list_to_write))
+            offset += len(str(posting_list_to_write))
+            term_to_write = term
+            posting_list_to_write = posting_list
+        else: # curr_term == term
+            posting_list_to_write.extend(posting_list)
 
-        #print(unpickled)
-        #print("__________\n")
+        # do we need to check if block is in removed files
+        if block_name not in removed_files:
+            try:
+                unpickler = pickle.Unpickler(opened_files[block_name])
+                temp_item = list(unpickler.load())
+                # block where the item of (term, docID) is from
+                temp_item.append(block_name)
+                pq.put(temp_item)
+            except EOFError as error:
+                removed_files.append(block_name)
+
+def write_to_file(file, content):
+    fw = open(file, 'a')
+    fw.write(''.join(content))
+    fw.close()
 
 input_directory = output_file_dictionary = output_file_postings = None
 
