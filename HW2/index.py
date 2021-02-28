@@ -10,8 +10,9 @@ import _pickle as pickle
 import math
 
 punc = string.punctuation
-block_count = 0
+block_count = 0 # running count of the number of blocks
 max_len = 0
+BLOCKS = "blocks"
 
 def usage():
     print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
@@ -24,13 +25,13 @@ def build_index(in_dir, out_dict, out_postings):
     print('indexing...')
     # This is an empty method
     # Pls implement your code in below
-    os.makedirs('blocks', exist_ok=True)
+    os.makedirs(BLOCKS, exist_ok=True)
     limit = 5
     doc_list = os.listdir(in_dir)
     doc_chunks = [doc_list[i * limit:(i + 1) * limit] for i in range((len(doc_list) + limit - 1) // limit)]
     for chunk in doc_chunks:
         spimi_invert(chunk, in_dir)
-    merge(in_dir)
+    merge(BLOCKS)
 
 def tokenize(word):
     stemmer = PorterStemmer()
@@ -40,7 +41,6 @@ def tokenize(word):
 
 def spimi_invert(chunk, in_dir):
     global block_count
-    global max_len
     block_count += 1
     output_file = "block" + str(block_count) + ".txt"
     index = {}
@@ -61,17 +61,20 @@ def spimi_invert(chunk, in_dir):
                                 curr_posting_list.append(int(entry))
                                 index[tokenized] = curr_posting_list
             file.close()
+    write_block_to_disk(index, output_file)
+
+def write_block_to_disk(index, output_file):
+    global max_len
     index_items = index.items()
     max_len = max(max_len, len(index_items))
-    for key, value in index_items:
+    for key, value in index_items: # sorting each postings list
         value.sort()
-    index_items = sorted(index_items)
-    output = open(os.path.join('blocks', output_file), 'wb')
+    index_items = sorted(index_items) # sorting term
+    output = open(os.path.join(BLOCKS, output_file), 'wb')
     for item in index_items:
         pickle.dump(item, output)
     output.close()
-    merge("blocks")
-
+    
 def merge(in_dir):
     global max_len
     limit = 5
