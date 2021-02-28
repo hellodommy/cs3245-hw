@@ -79,16 +79,21 @@ def merge(in_dir):
     global max_len
     limit = 5
     loops = math.ceil(max_len / limit)
-    opened_files = []
+    opened_files = {}
+    removed_files = []
     # open all files and store in list
     for entry in os.listdir(in_dir):
-        opened_files.append(open(os.path.join(in_dir, entry), 'rb'))
+        opened_files[entry] = open(os.path.join(in_dir, entry), 'rb')
     for i in range(loops):  # 1 reading of limit lines
         unpickled = []
-        for opened_file in opened_files:
-            unpickler = pickle.Unpickler(opened_file)
+        for key, value in opened_files.items():
+            unpickler = pickle.Unpickler(value)
             for j in range(limit):
-                unpickled.append(unpickler.load())
+                if key not in removed_files:
+                    try:
+                        unpickled.append(unpickler.load())
+                    except EOFError as error:
+                        removed_files.append(key)
             # do the merge now
         unpickled.sort()
         # merge unpickled here
