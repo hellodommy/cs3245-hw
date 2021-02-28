@@ -4,7 +4,6 @@ import re
 import string
 import sys
 import getopt
-from queue import Queue
 
 OPERATORS = ['(', 'NOT', 'AND', 'OR']
 
@@ -21,36 +20,67 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     # Pls implement your code in below
     queries = open(queries_file, 'r')
     for query in queries.readlines():
-        tokenized = tokenize_query(query.rstrip())
-        print(' '.join(list(tokenized.queue)))
+        postfix_query = infix_to_postfix(query.rstrip())
+        print(' '.join(postfix_query))
 
-def tokenize_query(query):
-    split_query = query.split(' ')
-    operator_stack = []
-    output_queue = Queue()
-    for item in split_query:
-        if item.islower():
-            # check for opening bracket
-            if item[0] == '(':
-                operator_stack.append('(')
-                output_queue.put(item[1:])
-            elif item[len(item) - 1] == ')':
-                while len(operator_stack) > 0 and operator_stack[0] != '(':
-                    output_queue.put(operator_stack.pop())
-                if len(operator_stack) > 0 and operator_stack[0] == '(':
-                    operator_stack.pop()
-                else:
-                    raise ValueError("cannot find matching open parenthesis with close")
-            else:
-                output_queue.put(item)
-        elif item.isupper() and item in OPERATORS: # '(' will not get through here
-            while((len(operator_stack) > 0) and (take_precedence(operator_stack[0], item) and operator_stack[0] != '(')):
-                output_queue.put(operator_stack.pop())
-            operator_stack.append(item)
+def split_bool_expr(expression):
+    '''
+    Splits given boolean string expression into string list of operators and operands
+    '''
+    initial_split = expression.split()
+    final_split = []
+    for item in initial_split:
+        if item[0] == "(" and item[-1] == ")":
+            final_split.extend(["(", item[1:-1], ")"])
+        elif item[0] == "(":
+            final_split.extend(["(", item[1:]])
+        elif item[len(item) - 1] == ")":
+            final_split.extend([item[:-1], ")"])
         else:
-            raise ValueError("we screqwed up")
-    while len(operator_stack) > 0:
-        output_queue.put(operator_stack.pop())
+            final_split.append(item)
+    
+    return final_split
+
+def infix_to_postfix(expression):
+    '''
+    Translates string postfix boolean expression to string list infix boolean expression
+    Operators handled: AND, OR, NOT, ()
+    Assumptions: no nested (); expression is valid
+    '''
+    split_expr = split_bool_expr(expression)
+    output_queue = [] # first in, first out
+    operator_stack = [] # last in, first out
+    unary_list = []
+    for item in split_expr:
+        if item == "NOT":
+            unary_list.append(item)
+        elif item == "AND" or item == "OR":
+            while ((len(operator_stack) > 0 and (operator_stack[-1] == "AND" or operator_stack[-1] == "OR")) and operator_stack[-1] == item and operator_stack[-1] != "("):
+                output_queue.append(operator_stack.pop())
+            operator_stack.append(item)
+        elif item == "(":
+            operator_stack.append(item)
+            if len(unary_list) > 0:
+                unary_list.append(item)
+        elif item == ")":
+            while operator_stack[-1] != "(":
+                output_queue.append(operator_stack.pop())
+            if operator_stack[-1] == "(":
+                operator_stack.pop()
+            if unary_list[-1] == "(":
+                unary_list.pop()
+                while len(unary_list) > 0 and unary_list[-1] != "(":
+                    output_queue.append(unary_list.pop())
+        else:
+            # item is an operand
+            output_queue.append(item)
+            if len(unary_list) > 0:
+                while len(unary_list) > 0 and unary_list[-1] != "(":
+                    output_queue.append(unary_list.pop())
+    
+    for operator in reversed(operator_stack):
+        output_queue.append(operator)
+    
     return output_queue
 
 def take_precedence(op1, op2):
