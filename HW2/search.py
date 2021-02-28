@@ -83,6 +83,28 @@ def infix_to_postfix(expression):
     
     return output_queue
 
+def evaluate_postfix(postfix_expr):
+    '''
+    Evaluates the given string list postfix expression
+    '''
+    stack = [] # last in, first out
+    for item in postfix_expr:
+        if item == "NOT":
+            operand = stack.pop()
+            # apply NOT operator to popped operand
+            # push result back onto stack
+        elif item == "AND" or item == "OR":
+            operand_one = stack.pop()
+            operand_two = stack.pop()
+            # apply AND/OR operator to popped operands
+            # push result back onto stack
+        else:
+            # item is an operand
+            stack.append(item)
+    
+    # stack will only have one item now: the final result
+    return stack.pop()
+
 def take_precedence(op1, op2):
     return OPERATORS.index(op1) <= OPERATORS.index(op2)
 
