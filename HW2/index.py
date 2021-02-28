@@ -114,11 +114,12 @@ def merge(in_dir, out_dict, out_postings):
             posting_list_to_write = posting_list
         elif term_to_write != term:  # time to write our current term to to disk because we encountered a new term
             posting_list_to_write.sort()
+            posting_list_w_skip_ptr = add_skip_ptr(posting_list_to_write)
             # (doc_frequency, absolute_offset, accumulative_offset)
-            dict_entry = term_to_write + " " + str(len(posting_list_to_write)) + " " + str(offset) + " " + str(len(str(posting_list_to_write))) + "\n"
+            dict_entry = term_to_write + " " + str(len(posting_list_to_write)) + " " + str(offset) + " " + str(len(posting_list_w_skip_ptr)) + "\n"
             write_to_file(out_dict, dict_entry)
-            write_to_file(out_postings, str(posting_list_to_write))
-            offset += len(str(posting_list_to_write))
+            write_to_file(out_postings, posting_list_w_skip_ptr)
+            offset += len(posting_list_w_skip_ptr)
             term_to_write = term
             posting_list_to_write = posting_list
         else: # curr_term == term
@@ -134,6 +135,25 @@ def merge(in_dir, out_dict, out_postings):
                 pq.put(temp_item)
             except EOFError as error:
                 removed_files.append(block_name)
+
+def add_skip_ptr(posting_list):
+    l = len(posting_list)
+    result = ''
+    if l > 2:
+        num_ptr = math.floor(math.sqrt(l))
+        ptr_gap = math.floor(l / num_ptr)
+        for i in range(l):
+            if i % ptr_gap == 0 and i < l - 2:
+                if i + ptr_gap >= l:
+                    result += str(posting_list[i]) + ' ^' + str(l - i - 1) + ' '
+                else:
+                    result += str(posting_list[i]) + ' ^' + str(ptr_gap) + ' '
+            else:
+                result += str(posting_list[i]) + ' '
+    else:
+        for i in range(l):
+            result += str(posting_list[i]) + ' '
+    return result
 
 def write_to_file(file, content):
     fw = open(file, 'a')
