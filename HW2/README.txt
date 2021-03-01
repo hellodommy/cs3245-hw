@@ -52,3 +52,6 @@ https://geeksforgeeks.org/break-list-chunks-size-n-python/
 
 Using a global variable in Python
 https://vbsreddy1.medium.com/unboundlocalerror-when-the-variable-has-a-value-in-python-e34e097547d6
+
+Convert query infix to postifx
+https://en.wikipedia.org/wiki/Shunting-yard_algorithm

@@ -106,6 +106,8 @@ def infix_to_postfix(expression):
     
     return output_queue
 
+# TODO: Optimise by evaluating those with lower frequency first
+# TODO: Figure out how to evaluate NOT
 def evaluate_postfix(postfix_expr):
     '''
     Evaluates the given string list postfix expression
@@ -120,17 +122,17 @@ def evaluate_postfix(postfix_expr):
             # apply AND/OR operator to popped operands
             # push result back onto stack
             res = eval_AND(stack.pop(), stack.pop())
-            stack.append(res)
+            stack.append(['res', res])
         elif item == "OR":
-            operand_one = stack.pop()
-            operand_two = stack.pop()
+            res = eval_OR(stack.pop(), stack.pop())
+            stack.append(['res', res])
         else:
             # item is an operand
-            stack.append(item)
+            stack.append(['operand', item])
     
     # stack will only have one item now: the final result
     assert len(stack) == 1
-    return stack.pop()
+    return stack.pop()[1].rstrip()
 
 def read_posting(seek_offset, bytes_to_read):
     f = open(POSTINGS_FILE, 'r')
@@ -140,11 +142,16 @@ def read_posting(seek_offset, bytes_to_read):
     f.close()
     return result
 
-
-def get_skip(posting_list):
+def separate_posting_and_skip(posting_list):
+    '''
+    Returns 2 lists
+    1. Regular posting list
+    2. Skip list
+    '''
     skip_list = []
     reg_list = []
     posting_count = 0
+    
     items = posting_list.rstrip().split(' ')
     item_count = 0
     while (item_count < len(items)):
@@ -163,18 +170,66 @@ def get_skip(posting_list):
 
     return reg_list, skip_list
 
+# TODO: Dynamically assign skip ptr to intermediate results?
+def get_posting_and_skip(op1, op2):
+    '''
+    Checks if item is an operand or an intermediate result and gets necesary posting list and skip list
+    '''
+    posting1 = []
+    skips1 = []
+    posting2 = []
+    skips2 = []
+
+    if op1[0] == 'operand':
+        tok1 = tokenize(op1[1])
+        off1, bytes1 = DICTIONARY[tok1][1], DICTIONARY[tok1][2]
+        bytes1 = read_posting(off1, bytes1) # getting posting list with skip ptr from postings file
+        posting1, skips1 = separate_posting_and_skip(bytes1)
+    else:
+        posting1, skips1 = separate_posting_and_skip(op1[1])
+
+    if op2[0] == 'operand':
+        tok2 = tokenize(op2[1])
+        off2, bytes2 = DICTIONARY[tok2][1], DICTIONARY[tok2][2]
+        bytes2 = read_posting(off2, bytes2) # getting posting list with skip ptr from postings file
+        posting2, skips2 = separate_posting_and_skip(bytes2)
+    else:
+        posting2, skips2 = separate_posting_and_skip(op2[1])
+    return posting1, skips1, posting2, skips2
+
+# FIXME: OR does not need skip list, maybe make another method to get just the posting list?
+def eval_OR(op1, op2):
+    posting1, skips1, posting2, skips2 = get_posting_and_skip(op1, op2)
+    result = ''
+
+    ptr1 = 0
+    ptr2 = 0
+    result = ''
+    while ptr1 < len(posting1) and ptr2 < len(posting2):
+        if posting1[ptr1] == posting2[ptr2]:
+            result += str(posting1[ptr1]) + ' '
+            ptr1 += 1
+            ptr2 += 1
+        elif posting1[ptr1] > posting2[ptr2]:
+            result += str(posting2[ptr2]) + ' '
+            ptr2 += 1
+        elif posting2[ptr2] > posting1[ptr1]:
+            result += str(posting1[ptr1]) + ' '
+            ptr1 += 1
+    if ptr1 == len(posting1) and ptr2 < len(posting2): # still have postings in posting2 but no more in posting1
+        rem_items = posting2[ptr2:]
+        for item in rem_items:
+            result += str(item) + ' '
+    elif ptr2 == len(posting2) and ptr1 < len(posting1): # still have postings in posting1 but no more in posting2
+        rem_items = posting1[ptr1:]
+        for item in rem_items:
+            result += str(item) + ' '
+    
+    return result
+    
 def eval_AND(op1, op2):
-    '''
-    assume no skip pointers
-    '''
-    tok1 = tokenize(op1)
-    tok2 = tokenize(op2)
-    off1, bytes1 = DICTIONARY[tok1][1], DICTIONARY[tok1][2]
-    off2, bytes2 = DICTIONARY[tok2][1], DICTIONARY[tok2][2]
-    bytes1 = read_posting(off1, bytes1)
-    posting1, skips1 = get_skip(bytes1)
-    bytes2 = read_posting(off2, bytes2)
-    posting2, skips2 = get_skip(bytes2)
+    posting1, skips1, posting2, skips2 = get_posting_and_skip(op1, op2)
+
     ptr1 = 0
     ptr2 = 0
     result = ''
