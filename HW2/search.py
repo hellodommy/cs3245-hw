@@ -122,7 +122,10 @@ def evaluate_postfix(postfix_expr):
     stack = [] # last in, first out
     for item in postfix_expr:
         if item == "NOT":
-            operand = stack.pop()
+            '''
+            assume simple NOT (ie. paired with operand only)
+            '''
+            operand = stack.pop() ## assume this is an operand
             # apply NOT operator to popped operand
             # push result back onto stack
         elif item == "AND":
@@ -178,36 +181,28 @@ def separate_posting_and_skip(posting_list):
     return reg_list, skip_list
 
 # TODO: Dynamically assign skip ptr to intermediate results?
-def get_posting_and_skip(op1, op2):
+def get_posting_and_skip(op):
     '''
     Checks if item is an operand or an intermediate result and gets necesary posting list and skip list
     '''
-    posting1 = []
-    skips1 = []
-    posting2 = []
-    skips2 = []
+    posting = []
+    skips = []
 
-    if op1[0] == 'operand':
-        tok1 = tokenize(op1[1])
-        off1, bytes1 = DICTIONARY[tok1][1], DICTIONARY[tok1][2]
-        bytes1 = read_posting(off1, bytes1) # getting posting list with skip ptr from postings file
-        posting1, skips1 = separate_posting_and_skip(bytes1)
+    if op[0] == 'operand':
+        tok = tokenize(op[1])
+        offset, bytes_to_read = DICTIONARY[tok][1], DICTIONARY[tok][2]
+        # getting posting list with skip ptr from postings file
+        full_posting = read_posting(offset, bytes_to_read)
+        posting, skips = separate_posting_and_skip(full_posting)
     else:
-        posting1, skips1 = separate_posting_and_skip(op1[1])
+        posting, skips = separate_posting_and_skip(op[1])
 
-    if op2[0] == 'operand':
-        tok2 = tokenize(op2[1])
-        off2, bytes2 = DICTIONARY[tok2][1], DICTIONARY[tok2][2]
-        bytes2 = read_posting(off2, bytes2) # getting posting list with skip ptr from postings file
-        posting2, skips2 = separate_posting_and_skip(bytes2)
-    else:
-        posting2, skips2 = separate_posting_and_skip(op2[1])
-    return posting1, skips1, posting2, skips2
+    return posting, skips
 
 # FIXME: OR does not need skip list, maybe make another method to get just the posting list?
 def eval_OR(op1, op2):
-    posting1, skips1, posting2, skips2 = get_posting_and_skip(op1, op2)
-    result = ''
+    posting1, skips1 = get_posting_and_skip(op1)
+    posting2, skips2 = get_posting_and_skip(op2)
 
     ptr1 = 0
     ptr2 = 0
@@ -235,7 +230,8 @@ def eval_OR(op1, op2):
     return result
     
 def eval_AND(op1, op2):
-    posting1, skips1, posting2, skips2 = get_posting_and_skip(op1, op2)
+    posting1, skips1 = get_posting_and_skip(op1)
+    posting2, skips2 = get_posting_and_skip(op2)
 
     ptr1 = 0
     ptr2 = 0
