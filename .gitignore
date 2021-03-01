@@ -6,3 +6,5 @@ HW2/blocks
 dictionary-file
 postings-file
 HW2/__pycache__
+dictionary.txt
+postings.txt

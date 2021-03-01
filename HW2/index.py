@@ -13,6 +13,7 @@ from queue import PriorityQueue
 punc = string.punctuation
 block_count = 0 # running count of the number of blocks
 max_len = 0
+DOC_IDS = []
 BLOCKS = "blocks"
 
 def usage():
@@ -36,7 +37,23 @@ def build_index(in_dir, out_dict, out_postings):
     f.close()
     f = open(out_postings, 'w+')
     f.close()
-    merge(BLOCKS, out_dict, out_postings)
+    offset = log_doc_ids(out_dict, out_postings)
+    merge(BLOCKS, out_dict, out_postings, offset)
+
+def log_doc_ids(out_dict, out_postings):
+    '''
+    Collecting all docIDs to support NOT queries in search phase
+    '''
+    global DOC_IDS
+    DOC_IDS.sort()
+    str_form = ''
+    for doc_id in DOC_IDS:
+        str_form += str(doc_id) + ' '
+    # (doc_frequency, absolute_offset, accumulative_offset)
+    dict_expr = "* 0 0 " + str(len(str_form)) + "\n"
+    write_to_file(out_dict, dict_expr)
+    write_to_file(out_postings, str_form)
+    return len(str_form)
 
 def tokenize(word):
     stemmer = PorterStemmer()
@@ -46,10 +63,12 @@ def tokenize(word):
 
 def spimi_invert(chunk, in_dir):
     global block_count
+    global DOC_IDS
     block_count += 1
     output_file = "block" + str(block_count) + ".txt"
     index = {}
     for entry in chunk:
+        DOC_IDS.append(int(entry))
         full_path = os.path.join(in_dir, entry)
         if os.path.isfile(full_path):
             file = open(full_path, "r")
@@ -80,7 +99,10 @@ def write_block_to_disk(index, output_file):
         pickle.dump(item, output)
     output.close()
 
-def merge(in_dir, out_dict, out_postings):
+def merge(in_dir, out_dict, out_postings, offset):
+    '''
+    Perform n-way merge, reading limit-number of entries from each block at a time
+    '''
     global max_len
     limit = 5
     loops = math.ceil(max_len / limit)
@@ -104,7 +126,6 @@ def merge(in_dir, out_dict, out_postings):
                     removed_files.append(block_name)
     term_to_write = ''
     posting_list_to_write = []
-    offset = 0
     while not pq.empty():
         item = pq.get()
         #print(item)
