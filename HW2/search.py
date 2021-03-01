@@ -7,7 +7,7 @@ from nltk.stem.porter import *
 
 OPERATORS = ['(', 'NOT', 'AND', 'OR']
 DICTIONARY = {}
-DOC_IDS = []
+DOC_IDS = ''
 POSTINGS_FILE = ''
 
 def usage():
@@ -39,9 +39,7 @@ def store_doc_ids(info):
     '''
     global DOC_IDS
     postings = read_posting(int(info[2]), int(info[3]))
-    postings = postings.rstrip().split(' ')
-    for posting in postings:
-        DOC_IDS.append(int(posting))
+    DOC_IDS = postings
 
 def run_search(dict_file, postings_file, queries_file, results_file):
     """
@@ -58,7 +56,9 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     for query in queries.readlines():
         postfix_query = infix_to_postfix(query.rstrip())
         res = evaluate_postfix(postfix_query)
-        print(res)
+        print(query.rstrip() + ": " + res)
+        #print(query + "\n" + res)
+        #print('\n')
         #print(' '.join(postfix_query))
 
 def split_bool_expr(expression):
@@ -141,6 +141,8 @@ def evaluate_postfix(postfix_expr):
             assume simple NOT (ie. paired with operand only)
             '''
             operand = stack.pop() ## assume this is an operand
+            res = eval_NOT(operand, DOC_IDS)
+            stack.append(['res', res])
             # apply NOT operator to popped operand
             # push result back onto stack
         elif item == "AND":
@@ -157,7 +159,11 @@ def evaluate_postfix(postfix_expr):
     
     # stack will only have one item now: the final result
     assert len(stack) == 1
-    return stack.pop()[1].rstrip()
+    res = stack.pop()
+    if res[0] == 'operand': # if the query is simply a term
+        res = eval_simple(res).rstrip()
+        return res.strip()
+    return res[1].rstrip()
 
 def read_posting(seek_offset, bytes_to_read):
     f = open(POSTINGS_FILE, 'r')
@@ -213,6 +219,32 @@ def get_posting_and_skip(op):
         posting, skips = separate_posting_and_skip(op[1])
 
     return posting, skips
+
+def eval_simple(op):
+    '''
+    Simplest query to get documents that contain a term
+    '''
+    posting, skips = get_posting_and_skip(op)
+    res = ''
+    for item in posting:
+        res += str(item) + ' '
+    return res
+        
+# FIXME: OR does not need skip list, maybe make another method to get just the posting list?
+def eval_NOT(op, intermediate):
+    '''
+    Assume NOT is only paired with a term
+    '''
+    posting, skips = get_posting_and_skip(op)
+    intermediate_postings = []
+    intermediate = intermediate.rstrip().split(' ')
+    res = ''
+    for item in intermediate:
+        intermediate_postings.append(int(item))
+    for intermediate_posting in intermediate_postings:
+        if intermediate_posting not in posting:
+            res += str(intermediate_posting) + ' '
+    return res
 
 # FIXME: OR does not need skip list, maybe make another method to get just the posting list?
 def eval_OR(op1, op2):

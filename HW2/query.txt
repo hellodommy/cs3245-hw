@@ -1,6 +1,7 @@
 analysts AND alone
 both AND from
-both AND from AND the
-both OR from
-both OR from OR analyst
-both AND from OR analyst
+both AND from OR analysts
+NOT from
+NOT from AND analysts
+analysts
+from
