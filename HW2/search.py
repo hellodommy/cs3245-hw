@@ -7,6 +7,7 @@ from nltk.stem.porter import *
 
 OPERATORS = ['(', 'NOT', 'AND', 'OR']
 DICTIONARY = {}
+DOC_IDS = []
 POSTINGS_FILE = ''
 
 def usage():
@@ -24,9 +25,23 @@ def read_dict(dict_file):
     f = open(dict_file, 'r')
     for line in f.readlines():
         info = (line.rstrip()).split(' ')
+        if info[0] == '*': # encountered special term for all our doc ids
+            store_doc_ids(info)
+            continue
         # term: [doc_freq, absolute_offset, accumulative_offset]
         DICTIONARY[info[0]] = [int(info[1]), int(info[2]), int(info[3])]
+    assert '*' not in DICTIONARY
     f.close()
+
+def store_doc_ids(info):
+    '''
+    Use the special term * to store all the possible doc ids
+    '''
+    global DOC_IDS
+    postings = read_posting(int(info[2]), int(info[3]))
+    postings = postings.rstrip().split(' ')
+    for posting in postings:
+        DOC_IDS.append(int(posting))
 
 def run_search(dict_file, postings_file, queries_file, results_file):
     """
@@ -37,8 +52,8 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     # This is an empty method
     # Pls implement your code in below
     global POSTINGS_FILE
-    read_dict(dict_file) # read from dictionary file and store in memory
     POSTINGS_FILE = postings_file
+    read_dict(dict_file) # read from dictionary file and store in memory
     queries = open(queries_file, 'r')
     for query in queries.readlines():
         postfix_query = infix_to_postfix(query.rstrip())
