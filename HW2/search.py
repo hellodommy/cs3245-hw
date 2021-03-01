@@ -57,6 +57,7 @@ def run_search(dict_file, postings_file, queries_file, results_file):
         postfix_query = infix_to_postfix(query.rstrip())
         res = evaluate_postfix(postfix_query)
         print(query.rstrip() + ": " + res)
+        #print(postfix_query)
         #print(query + "\n" + res)
         #print('\n')
         #print(' '.join(postfix_query))
@@ -129,7 +130,7 @@ def infix_to_postfix(expression):
     return output_queue
 
 # TODO: Optimise by evaluating those with lower frequency first
-# TODO: Figure out how to evaluate NOT
+# TODO: Optimise NOT (it is very stupid right now, comapring with whole document list)
 def evaluate_postfix(postfix_expr):
     '''
     Evaluates the given string list postfix expression
@@ -138,13 +139,12 @@ def evaluate_postfix(postfix_expr):
     for item in postfix_expr:
         if item == "NOT":
             '''
-            assume simple NOT (ie. paired with operand only)
+            assume simple NOT
             '''
-            operand = stack.pop() ## assume this is an operand
-            res = eval_NOT(operand, DOC_IDS)
-            stack.append(['res', res])
             # apply NOT operator to popped operand
             # push result back onto stack
+            res = eval_NOT(stack.pop(), DOC_IDS)
+            stack.append(['res', res])
         elif item == "AND":
             # apply AND/OR operator to popped operands
             # push result back onto stack
