@@ -64,6 +64,13 @@ def split_bool_expr(expression):
 
     return final_split
 
+def has_greater_or_equal_precedence(op1, op2):
+    '''
+    Returns true if op1 has greater than or equal precedence to op2. False otherwise.
+    Operators handled (decreasing precedence): AND, OR
+    '''
+    return (op1 == "AND" and op2 == "OR") or op1 == op2
+
 def infix_to_postfix(expression):
     '''
     Translates string postfix boolean expression to string list infix boolean expression
@@ -78,7 +85,7 @@ def infix_to_postfix(expression):
         if item == "NOT":
             unary_list.append(item)
         elif item == "AND" or item == "OR":
-            while ((len(operator_stack) > 0 and (operator_stack[-1] == "AND" or operator_stack[-1] == "OR")) and operator_stack[-1] == item and operator_stack[-1] != "("):
+            while ((len(operator_stack) > 0 and (operator_stack[-1] == "AND" or operator_stack[-1] == "OR")) and has_greater_or_equal_precedence(operator_stack[-1], item) and operator_stack[-1] != "("):
                 output_queue.append(operator_stack.pop())
             operator_stack.append(item)
         elif item == "(":
