@@ -41,6 +41,7 @@ def store_doc_ids(info):
     postings = read_posting(int(info[2]), int(info[3]))
     DOC_IDS = postings
 
+# FIXME: Output file has newline at EOF - remove it
 def run_search(dict_file, postings_file, queries_file, results_file):
     """
     using the given dictionary file and postings file,
@@ -53,14 +54,26 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     POSTINGS_FILE = postings_file
     read_dict(dict_file) # read from dictionary file and store in memory
     queries = open(queries_file, 'r')
+    rf = open(results_file, 'w+')
+    rf.close()
     for query in queries.readlines():
-        postfix_query = infix_to_postfix(query.rstrip())
-        res = evaluate_postfix(postfix_query)
-        print(query.rstrip() + ": " + res)
+        rf = open(results_file, 'a')
+        try:
+            postfix_query = infix_to_postfix(query.rstrip())
+            res = evaluate_postfix(postfix_query)
+            if res == '':
+                rf.write('\n')
+            else:
+                rf.write(res + '\n')
+        except AssertionError as error:
+            # error in evaluate_postfix() when there is no query
+            rf.write('\n')
+        #print(query.rstrip() + ": " + res)
         #print(postfix_query)
         #print(query + "\n" + res)
         #print('\n')
         #print(' '.join(postfix_query))
+    rf.close()
 
 def split_bool_expr(expression):
     '''
@@ -182,7 +195,7 @@ def separate_posting_and_skip(posting_list):
     skip_list = []
     reg_list = []
     posting_count = 0
-    
+
     items = posting_list.rstrip().split(' ')
     item_count = 0
     while (item_count < len(items)):
@@ -211,12 +224,20 @@ def get_posting_and_skip(op):
 
     if op[0] == 'operand':
         tok = tokenize(op[1])
-        offset, bytes_to_read = DICTIONARY[tok][1], DICTIONARY[tok][2]
-        # getting posting list with skip ptr from postings file
-        full_posting = read_posting(offset, bytes_to_read)
-        posting, skips = separate_posting_and_skip(full_posting)
+        try:
+            offset, bytes_to_read = DICTIONARY[tok][1], DICTIONARY[tok][2]
+            # getting posting list with skip ptr from postings file
+            full_posting = read_posting(offset, bytes_to_read)
+            posting, skips = separate_posting_and_skip(full_posting)
+        except KeyError as error:
+            # token cannot be found in our dictionary
+            posting, skips = [], []
     else:
-        posting, skips = separate_posting_and_skip(op[1])
+        try:
+            posting, skips = separate_posting_and_skip(op[1])
+        except ValueError as error:
+            # if intermediate result is blank
+            posting, skips = [], []
 
     return posting, skips
 
