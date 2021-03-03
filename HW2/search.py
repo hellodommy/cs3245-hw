@@ -53,7 +53,6 @@ def rank_infx(infix_query):
     '''
     return infix_query
 
-# FIXME: Output file has newline at EOF - remove it
 def run_search(dict_file, postings_file, queries_file, results_file):
     """
     using the given dictionary file and postings file,
@@ -189,15 +188,13 @@ def evaluate_postfix(postfix_expr):
 
     if res[0] == 'operand': # if the query is simply a term
         res = eval_simple(res)
-        return res.rstrip()
     elif res[0] == 'not': # left with an intermediate 'not'
         res = eval_NOT(res)
-        reg_list, skip_list = separate_posting_and_skip(res) # removing skip pointers
-        return list_to_string(reg_list).rstrip()
     else:
         res = res[1]
-        reg_list, skip_list = separate_posting_and_skip(res)
-        return list_to_string(reg_list).rstrip()
+    reg_list, skip_list = separate_posting_and_skip(res)
+    
+    return list_to_string(reg_list).rstrip()
 
 def read_posting(seek_offset, bytes_to_read):
     f = open(POSTINGS_FILE, 'r')
@@ -235,7 +232,6 @@ def separate_posting_and_skip(posting_list):
 
     return reg_list, skip_list
 
-# TODO: Dynamically assign skip ptr to intermediate results?
 def get_posting_and_skip(op):
     '''
     Checks if item is an operand or an intermediate result and gets necesary posting list and skip list
