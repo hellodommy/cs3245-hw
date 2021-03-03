@@ -45,3 +45,70 @@ def list_to_string(my_list):
     for l in my_list:
         res += str(l) + ' '
     return res
+
+def split_bool_expr(expression):
+    '''
+    Splits given boolean string expression into string list of operators and operands
+    '''
+    initial_split = expression.split()
+    final_split = []
+    for item in initial_split:
+        if item[0] == "(" and item[-1] == ")":
+            final_split.extend(["(", item[1:-1], ")"])
+        elif item[0] == "(":
+            final_split.extend(["(", item[1:]])
+        elif item[len(item) - 1] == ")":
+            final_split.extend([item[:-1], ")"])
+        else:
+            final_split.append(item)
+
+    return final_split
+
+def has_greater_or_equal_precedence(op1, op2):
+    '''
+    Returns true if op1 has greater than or equal precedence to op2. False otherwise.
+    Operators handled (decreasing precedence): AND, OR
+    '''
+    return (op1 == "AND" and op2 == "OR") or op1 == op2
+
+def infix_to_postfix(expression):
+    '''
+    Translates string postfix boolean expression to string list infix boolean expression
+    Operators handled: AND, OR, NOT, ()
+    Assumptions: no nested (); expression is valid
+    '''
+    split_expr = split_bool_expr(expression)
+    output_queue = [] # first in, first out
+    operator_stack = [] # last in, first out
+    unary_list = []
+    for item in split_expr:
+        if item == "NOT":
+            unary_list.append(item)
+        elif item == "AND" or item == "OR":
+            while ((len(operator_stack) > 0 and (operator_stack[-1] == "AND" or operator_stack[-1] == "OR")) and has_greater_or_equal_precedence(operator_stack[-1], item) and operator_stack[-1] != "("):
+                output_queue.append(operator_stack.pop())
+            operator_stack.append(item)
+        elif item == "(":
+            operator_stack.append(item)
+            if len(unary_list) > 0:
+                unary_list.append(item)
+        elif item == ")":
+            while operator_stack[-1] != "(":
+                output_queue.append(operator_stack.pop())
+            if operator_stack[-1] == "(":
+                operator_stack.pop()
+            if len(unary_list) > 0 and unary_list[-1] == "(":
+                unary_list.pop()
+                while len(unary_list) > 0 and unary_list[-1] != "(":
+                    output_queue.append(unary_list.pop())
+        else:
+            # item is an operand
+            output_queue.append(item)
+            if len(unary_list) > 0:
+                while len(unary_list) > 0 and unary_list[-1] != "(":
+                    output_queue.append(unary_list.pop())
+    
+    for operator in reversed(operator_stack):
+        output_queue.append(operator)
+    
+    return output_queue
