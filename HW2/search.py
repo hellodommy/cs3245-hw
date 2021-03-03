@@ -41,6 +41,19 @@ def store_doc_ids(info):
     postings = read_posting(int(info[2]), int(info[3]))
     DOC_IDS = postings
 
+def get_doc_freq(term):
+    '''
+    Returns document frequency for the term
+    0 if term cannot be found in dictionary
+    '''
+    tok = tokenize(term)
+    doc_freq = None
+    try:
+        doc_freq = DICTIONARY[tok][0]
+    except KeyError as error:
+        doc_freq = 0
+    return doc_freq
+
 def rank_infx(infix_query):
     '''
     Placeholder return value
@@ -69,6 +82,7 @@ def run_search(dict_file, postings_file, queries_file, results_file):
             infix_query = lines[i].rstrip()
             ranked_infix = rank_infx(infix_query)
             postfix_query = infix_to_postfix(ranked_infix)
+            print(postfix_query)
             res = evaluate_postfix(postfix_query)
             if res == '':
                 rf.write('\n')
@@ -156,15 +170,18 @@ def evaluate_postfix(postfix_expr):
     Evaluates the given string list postfix expression
     '''
     stack = [] # last in, first out
+    counter = 0
     for item in postfix_expr:
+        print(counter)
+        counter += 1
         if item == "NOT":
             '''
             assume simple NOT
             '''
             # apply NOT operator to popped operand
             # push result back onto stack
-            res = eval_NOT(stack.pop(), DOC_IDS)
-            stack.append(['res', res])
+            res = get_intermediate_NOT(stack.pop())
+            stack.append(['not', res])
         elif item == "AND":
             # apply AND/OR operator to popped operands
             # push result back onto stack
@@ -176,14 +193,30 @@ def evaluate_postfix(postfix_expr):
         else:
             # item is an operand
             stack.append(['operand', item])
+        print("stack", stack)
     
     # stack will only have one item now: the final result
     assert len(stack) == 1
     res = stack.pop()
     if res[0] == 'operand': # if the query is simply a term
         res = eval_simple(res).rstrip()
-        return res.strip()
+        return res
+    elif res[0] == 'not': # left with an intermediate 'not'
+        res = eval_NOT(str_to_list(res[1]))
+        return list_to_str(res)
+
     return res[1].rstrip()
+
+def str_to_list(string):
+    l = string.split(' ')
+    return l
+
+# FIXME: Adds space between 2 digit numbers if code is res += str(item) + ' '
+def list_to_str(l):
+    res = ''
+    for item in l:
+        res += str(item)
+    return res.rstrip()
 
 def read_posting(seek_offset, bytes_to_read):
     f = open(POSTINGS_FILE, 'r')
@@ -239,7 +272,7 @@ def get_posting_and_skip(op):
         except KeyError as error:
             # token cannot be found in our dictionary
             posting, skips = [], []
-    else:
+    else: # type is not or res
         try:
             posting, skips = separate_posting_and_skip(op[1])
         except ValueError as error:
@@ -257,27 +290,36 @@ def eval_simple(op):
     for item in posting:
         res += str(item) + ' '
     return res
-        
+
+def get_intermediate_NOT(op):
+    posting, skips = get_posting_and_skip(op)
+    return list_to_str(posting)
+
 # FIXME: OR does not need skip list, maybe make another method to get just the posting list?
-def eval_NOT(op, intermediate):
+def eval_NOT(not_postings):
+    '''
+    Unlike other eval methods, returns a list instead of string because there are no skip pointers
+    '''
+    global DOC_IDS
     '''
     Assume NOT is only paired with a term
     '''
-    posting, skips = get_posting_and_skip(op)
-    intermediate_postings = []
-    intermediate = intermediate.rstrip().split(' ')
-    res = ''
-    for item in intermediate:
-        intermediate_postings.append(int(item))
-    for intermediate_posting in intermediate_postings:
-        if intermediate_posting not in posting:
-            res += str(intermediate_posting) + ' '
-    return res
+    postings = []
+    for doc_id in DOC_IDS:
+        if doc_id not in not_postings:
+            postings.append(doc_id)
+    return postings
 
 # FIXME: OR does not need skip list, maybe make another method to get just the posting list?
 def eval_OR(op1, op2):
     posting1, skips1 = get_posting_and_skip(op1)
     posting2, skips2 = get_posting_and_skip(op2)
+
+    # update intermediate NOT to be actual result
+    if op1[0] == 'not':
+        posting1 = eval_NOT(posting1)
+    if op2[0] == 'not':
+        posting2 = eval_NOT(posting2)
 
     ptr1 = 0
     ptr2 = 0
@@ -308,24 +350,40 @@ def eval_AND(op1, op2):
     posting1, skips1 = get_posting_and_skip(op1)
     posting2, skips2 = get_posting_and_skip(op2)
 
-    ptr1 = 0
-    ptr2 = 0
     result = ''
-    while ptr1 < len(posting1) and ptr2 < len(posting2):
-        if posting1[ptr1] == posting2[ptr2]:
-            result += str(posting1[ptr1]) + ' '
-            ptr1 += 1
-            ptr2 += 1
-        elif posting1[ptr1] > posting2[ptr2]:
-            if skips2[ptr2] is not None and posting2[skips2[ptr2]] <= posting1[ptr1]:
-                ptr2 = skips2[ptr2]
-            else:
-                ptr2 += 1
-        elif posting2[ptr2] > posting1[ptr1]:
-            if skips1[ptr1] is not None and posting1[skips1[ptr1]] <= posting2[ptr2]:
-                ptr1 = skips1[ptr1]
-            else:
+
+    if op1[0] == 'not' and op2[0] != 'not': # NOT a AND b
+        for posting in posting2:
+            if posting not in posting1:
+                result += str(posting) + ' '
+    elif op1[0] != 'not' and op2[0] == 'not': # a AND NOT b
+        for posting in posting1:
+            if posting not in posting2:
+                result += str(posting) + ' '
+    elif op1[0] == 'not' and op2[0] == 'not': # NOT a AND NOT b
+        global DOC_IDS
+        doc_ids = DOC_IDS.rstrip().split(' ')
+        for doc_id in doc_ids:
+            if doc_id not in posting1 and doc_id not in posting2:
+                result += str(doc_id) + ' '
+    else: # pure a AND b
+        ptr1 = 0
+        ptr2 = 0
+        while ptr1 < len(posting1) and ptr2 < len(posting2):
+            if posting1[ptr1] == posting2[ptr2]:
+                result += str(posting1[ptr1]) + ' '
                 ptr1 += 1
+                ptr2 += 1
+            elif posting1[ptr1] > posting2[ptr2]:
+                if skips2[ptr2] is not None and posting2[skips2[ptr2]] <= posting1[ptr1]:
+                    ptr2 = skips2[ptr2]
+                else:
+                    ptr2 += 1
+            elif posting2[ptr2] > posting1[ptr1]:
+                if skips1[ptr1] is not None and posting1[skips1[ptr1]] <= posting2[ptr2]:
+                    ptr1 = skips1[ptr1]
+                else:
+                    ptr1 += 1
     return result
 
 def take_precedence(op1, op2):

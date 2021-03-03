@@ -1,3 +1,4 @@
 analysts AND alone
 both AND from
 NOT (both AND from)
+analysts AND NOT (both AND from)
