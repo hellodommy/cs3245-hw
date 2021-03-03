@@ -28,7 +28,7 @@ def build_index(in_dir, out_dict, out_postings):
     # This is an empty method
     # Pls implement your code in below
     os.makedirs(BLOCKS, exist_ok=True)
-    limit = 5
+    limit = 20
     doc_list = os.listdir(in_dir)
     doc_chunks = [doc_list[i * limit:(i + 1) * limit] for i in range((len(doc_list) + limit - 1) // limit)]
     for chunk in doc_chunks:

@@ -20,14 +20,17 @@ We are using the following:
 Index Construction Method:
 For indexing, we are using SPIMI because of the efficiency it has over BSBI.
 For each call of SPIMI Invert, we feed it a chunk of documents.
-We have currently set the limit to 5 as articles can be long,
-but the limit is a variable can easily be changed.
-Every 5 document chunks will be written to a block.
+We have currently set the limit to 20, but the limit is a variable can easily be changed.
+We decided on this number after running into OSError
+because a smaller limit created too many blocks that would have been opened
+during the n-way merge.
+Every 20 document chunks will be written to a block.
+
+Merge:
 Then, an n-way merge is performed,
 where we read a limit number of lines from each block into memory,
 so the efficiency is not lost by disk seeks.
-Like before, this limit is also set to 5
-and can be easily changed.
+Like before, this limit can be easily changed and is set to 5.
 
 Skip Pointers:
 Before the posting list is written to disk,
