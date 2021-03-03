@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 import re
 from nltk.tokenize import sent_tokenize, word_tokenize
-from nltk.stem.porter import *
 import sys
 import getopt
 import string
@@ -9,6 +8,7 @@ import os
 import _pickle as pickle
 import math
 from queue import PriorityQueue
+from utility import tokenize, add_skip_ptr
 
 punc = string.punctuation
 block_count = 0 # running count of the number of blocks
@@ -54,12 +54,6 @@ def log_doc_ids(out_dict, out_postings):
     write_to_file(out_dict, dict_expr)
     write_to_file(out_postings, str_form)
     return len(str_form)
-
-def tokenize(word):
-    stemmer = PorterStemmer()
-    word = word.lower()
-    word = stemmer.stem(word)
-    return word
 
 def spimi_invert(chunk, in_dir):
     global block_count
@@ -156,25 +150,6 @@ def merge(in_dir, out_dict, out_postings, offset):
                 pq.put(temp_item)
             except EOFError as error:
                 removed_files.append(block_name)
-
-def add_skip_ptr(posting_list):
-    l = len(posting_list)
-    result = ''
-    if l > 2:
-        num_ptr = math.floor(math.sqrt(l))
-        ptr_gap = math.floor(l / num_ptr)
-        for i in range(l):
-            if i % ptr_gap == 0 and i < l - 2:
-                if i + ptr_gap >= l:
-                    result += str(posting_list[i]) + ' ^' + str(l - i - 1) + ' '
-                else:
-                    result += str(posting_list[i]) + ' ^' + str(ptr_gap) + ' '
-            else:
-                result += str(posting_list[i]) + ' '
-    else:
-        for i in range(l):
-            result += str(posting_list[i]) + ' '
-    return result
 
 def write_to_file(file, content):
     fw = open(file, 'a')

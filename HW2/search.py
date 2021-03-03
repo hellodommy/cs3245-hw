@@ -3,7 +3,7 @@ import re
 import string
 import sys
 import getopt
-from nltk.stem.porter import *
+from utility import tokenize
 
 OPERATORS = ['(', 'NOT', 'AND', 'OR']
 DICTIONARY = {}
@@ -12,13 +12,6 @@ POSTINGS_FILE = ''
 
 def usage():
     print("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
-
-# TODO: Find a way to reuse the tokenize method from index.py without fking up the usage instructions
-def tokenize(word):
-    stemmer = PorterStemmer()
-    word = word.lower()
-    word = stemmer.stem(word)
-    return word
 
 def read_dict(dict_file):
     global DICTIONARY
