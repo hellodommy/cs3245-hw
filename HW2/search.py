@@ -216,19 +216,23 @@ def separate_posting_and_skip(posting_list):
 
     items = posting_list.rstrip().split(' ')
     item_count = 0
-    while (item_count < len(items)):
-        reg_list.append(int(items[item_count]))
-        if item_count < len(items) - 1 and (items[item_count + 1][0] == '^'):
-            skip_dist = int(items[item_count + 1][1:])
-            skip_list.append(posting_count + skip_dist)
-            item_count += 2  # move past the skip ptr
-            posting_count += 1
-        else:
-            # there is no skip ptr assigned to this element
-            skip_list.append(None)
-            item_count += 1
-            posting_count += 1
-    assert len(reg_list) == len(skip_list)
+    try:
+        while (item_count < len(items)):
+            reg_list.append(int(items[item_count]))
+            if item_count < len(items) - 1 and (items[item_count + 1][0] == '^'):
+                skip_dist = int(items[item_count + 1][1:])
+                skip_list.append(posting_count + skip_dist)
+                item_count += 2  # move past the skip ptr
+                posting_count += 1
+            else:
+                # there is no skip ptr assigned to this element
+                skip_list.append(None)
+                item_count += 1
+                posting_count += 1
+        assert len(reg_list) == len(skip_list)
+    except ValueError as error:
+        # posting_list string is empty
+        return reg_list, skip_list
 
     return reg_list, skip_list
 
