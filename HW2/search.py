@@ -6,7 +6,7 @@ import getopt
 from data import set_postings_file, read_dict
 from infix_optimizer import optimize_infix
 from eval import evaluate_postfix
-from utility import add_skip_ptr, list_to_string, tokenize, infix_to_postfix
+from utility import add_skip_ptr, tokenize, infix_to_postfix
 
 def usage():
     print("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
@@ -21,10 +21,19 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     # Pls implement your code in below
     set_postings_file(postings_file)
     read_dict(dict_file) # read from dictionary file and store in memory
-    queries = open(queries_file, 'r')
+
     rf = open(results_file, 'w+')
     rf.close()
+    
+    queries = open(queries_file, 'r')
     lines = queries.readlines()
+
+    '''
+    For each query:
+    (1) Optimize order of evaluation of terms based on document frequency
+    (2) Convert from infix to postfix
+    (3) Evaluate postfix query and write resulting document IDs to results file
+    '''
     for i in range(len(lines)):
         rf = open(results_file, 'a')
         try:
@@ -42,6 +51,7 @@ def run_search(dict_file, postings_file, queries_file, results_file):
         except AssertionError as error:
             # assertion error in evaluate_postfix() when there is no query, final stack will be empty
             rf.write('\n')
+    
     rf.close()
 
 dictionary_file = postings_file = file_of_queries = output_file_of_results = None

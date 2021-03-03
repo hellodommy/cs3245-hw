@@ -12,13 +12,13 @@ def set_postings_file(postings_file):
     global POSTINGS_FILE
     POSTINGS_FILE = postings_file
 
-def read_posting(seek_offset, bytes_to_read):
+def read_posting(byte_offset, bytes_to_read):
     '''
     Read specified bytes from the posting list at a byte offset
     '''
     f = open(POSTINGS_FILE, 'r')
     result = ''
-    f.seek(seek_offset)
+    f.seek(byte_offset)
     result += f.read(bytes_to_read)
     f.close()
     return result
@@ -42,15 +42,11 @@ def read_dict(dict_file):
 def get_doc_freq(term):
     '''
     Returns document frequency for the term
-    0 if term cannot be found in dictionary
     '''
-    tok = tokenize(term)
-    doc_freq = None
     try:
-        doc_freq = DICTIONARY[tok][0]
+        return DICTIONARY[tokenize(term)][0]
     except KeyError as error:
-        doc_freq = 0
-    return doc_freq
+        return 0
 
 def get_corpus_size():
     '''
@@ -94,24 +90,19 @@ def get_posting_and_skip(op):
     '''
     Checks if item is an operand or an intermediate result and gets necesary posting list and skip list
     '''
-    posting = []
-    skips = []
-
     if op[0] == 'operand':
         tok = tokenize(op[1])
         try:
             offset, bytes_to_read = DICTIONARY[tok][1], DICTIONARY[tok][2]
             # getting posting list with skip ptr from postings file
             full_posting = read_posting(offset, bytes_to_read)
-            posting, skips = separate_posting_and_skip(full_posting)
+            return separate_posting_and_skip(full_posting)
         except KeyError as error:
             # token cannot be found in our dictionary
-            posting, skips = [], []
+            return [], []
     else: # type is not or res
         try:
-            posting, skips = separate_posting_and_skip(op[1])
+            return separate_posting_and_skip(op[1])
         except ValueError as error:
             # if intermediate result is blank
-            posting, skips = [], []
-
-    return posting, skips
+            return [], []

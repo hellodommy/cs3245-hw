@@ -55,14 +55,14 @@ def eval_simple(op):
 # FIXME: OR does not need skip list, maybe make another method to get just the posting list?
 def eval_NOT(op):
     '''
-    Gets documents that do not contain op
+    Gets documents that do not contain `op`
     '''
     posting, skips = get_posting_and_skip(op)
 
     res = []
     
     for doc_id in get_doc_ids().rstrip().split(' '):
-        int_form = int(doc_id) # type casing string to integer for comparison
+        int_form = int(doc_id) # type casting string to integer for comparison
         if int_form not in posting:
             res.append(int_form)
 
@@ -73,7 +73,7 @@ def eval_NOT(op):
 # FIXME: OR does not need skip list, maybe make another method to get just the posting list?
 def eval_OR(op1, op2):
     '''
-    Gets union of documents containing op1 with documents containing op2
+    Gets union of documents containing `op1` with documents containing `op2`
     '''
     posting1, skips1 = get_posting_and_skip(op1)
     posting2, skips2 = get_posting_and_skip(op2)
@@ -115,14 +115,13 @@ def eval_OR(op1, op2):
     
 def eval_AND(op1, op2):
     '''
-    Gets intersection of documents containing op1 with documents containing op2
+    Gets intersection of documents containing `op1` with documents containing `op2`
     '''
     posting1, skips1 = get_posting_and_skip(op1)
     posting2, skips2 = get_posting_and_skip(op2)
 
     res = []
     if op1[0] == 'not' and op2[0] != 'not': # NOT a AND b
-        #print('posting2', posting2)
         for posting in posting2:
             if posting not in posting1:
                 res.append(posting)
