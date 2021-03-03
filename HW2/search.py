@@ -41,6 +41,12 @@ def store_doc_ids(info):
     postings = read_posting(int(info[2]), int(info[3]))
     DOC_IDS = postings
 
+def rank_infx(infix_query):
+    '''
+    Placeholder return value
+    '''
+    return infix_query
+
 # FIXME: Output file has newline at EOF - remove it
 def run_search(dict_file, postings_file, queries_file, results_file):
     """
@@ -60,7 +66,9 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     for i in range(len(lines)):
         rf = open(results_file, 'a')
         try:
-            postfix_query = infix_to_postfix(lines[i].rstrip())
+            infix_query = lines[i].rstrip()
+            ranked_infix = rank_infx(infix_query)
+            postfix_query = infix_to_postfix(ranked_infix)
             res = evaluate_postfix(postfix_query)
             if res == '':
                 rf.write('\n')
