@@ -56,23 +56,22 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     queries = open(queries_file, 'r')
     rf = open(results_file, 'w+')
     rf.close()
-    for query in queries.readlines():
+    lines = queries.readlines()
+    for i in range(len(lines)):
         rf = open(results_file, 'a')
         try:
-            postfix_query = infix_to_postfix(query.rstrip())
+            postfix_query = infix_to_postfix(lines[i].rstrip())
             res = evaluate_postfix(postfix_query)
             if res == '':
                 rf.write('\n')
             else:
-                rf.write(res + '\n')
+                if i == len(lines) - 1:
+                    rf.write(res)
+                else:
+                    rf.write(res + '\n')
         except AssertionError as error:
             # assertion error in evaluate_postfix() when there is no query, final stack will be empty
             rf.write('\n')
-        #print(query.rstrip() + ": " + res)
-        #print(postfix_query)
-        #print(query + "\n" + res)
-        #print('\n')
-        #print(' '.join(postfix_query))
     rf.close()
 
 def split_bool_expr(expression):
