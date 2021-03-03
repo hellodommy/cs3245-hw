@@ -3,7 +3,7 @@ import re
 import string
 import sys
 import getopt
-from utility import tokenize
+from utility import add_skip_ptr, list_to_string, tokenize
 
 OPERATORS = ['(', 'NOT', 'AND', 'OR']
 DICTIONARY = {}
@@ -33,7 +33,7 @@ def store_doc_ids(info):
     global DOC_IDS
     postings = read_posting(int(info[2]), int(info[3]))
     DOC_IDS = postings
-
+ 
 def get_doc_freq(term):
     '''
     Returns document frequency for the term
@@ -188,13 +188,16 @@ def evaluate_postfix(postfix_expr):
     res = stack.pop()
 
     if res[0] == 'operand': # if the query is simply a term
-        res = eval_simple(res).rstrip()
-        return res
+        res = eval_simple(res)
+        return res.rstrip()
     elif res[0] == 'not': # left with an intermediate 'not'
-        res = eval_NOT(res).rstrip()
-        return res
-
-    return res[1].rstrip()
+        res = eval_NOT(res)
+        reg_list, skip_list = separate_posting_and_skip(res) # removing skip pointers
+        return list_to_string(reg_list).rstrip()
+    else:
+        res = res[1]
+        reg_list, skip_list = separate_posting_and_skip(res)
+        return list_to_string(reg_list).rstrip()
 
 def read_posting(seek_offset, bytes_to_read):
     f = open(POSTINGS_FILE, 'r')
@@ -274,13 +277,15 @@ def eval_NOT(op):
     global DOC_IDS
     posting, skips = get_posting_and_skip(op)
 
-    res = ''
+    res = []
     
     for doc_id in DOC_IDS.rstrip().split(' '):
         int_form = int(doc_id) # type casing string to integer for comparison
         if int_form not in posting:
-            res += doc_id + ' '
+            res.append(int_form)
 
+    res = add_skip_ptr(res)
+    
     return res
 
 # FIXME: OR does not need skip list, maybe make another method to get just the posting list?
@@ -291,62 +296,64 @@ def eval_OR(op1, op2):
     # update intermediate NOT to be actual result
     if op1[0] == 'not':
         postings_str = eval_NOT(op1).rstrip()
-        posting1 = [int(i) for i in postings_str.split(' ')]
+        posting1, skips1 = separate_posting_and_skip(postings_str)
     if op2[0] == 'not':
         postings_str = eval_NOT(op2).rstrip()
-        posting2 = [int(i) for i in postings_str.split(' ')]
+        posting2, skips2 = separate_posting_and_skip(postings_str)
 
     ptr1 = 0
     ptr2 = 0
-    result = ''
+    res = []
     while ptr1 < len(posting1) and ptr2 < len(posting2):
         if posting1[ptr1] == posting2[ptr2]:
-            result += str(posting1[ptr1]) + ' '
+            res.append(posting1[ptr1])
             ptr1 += 1
             ptr2 += 1
         elif posting1[ptr1] > posting2[ptr2]:
-            result += str(posting2[ptr2]) + ' '
+            res.append(posting2[ptr2])
             ptr2 += 1
         elif posting2[ptr2] > posting1[ptr1]:
-            result += str(posting1[ptr1]) + ' '
+            res.append(posting1[ptr1])
             ptr1 += 1
     if ptr1 == len(posting1) and ptr2 < len(posting2): # still have postings in posting2 but no more in posting1
         rem_items = posting2[ptr2:]
         for item in rem_items:
-            result += str(item) + ' '
+            res.append(item)
     elif ptr2 == len(posting2) and ptr1 < len(posting1): # still have postings in posting1 but no more in posting2
         rem_items = posting1[ptr1:]
         for item in rem_items:
-            result += str(item) + ' '
+            res.append(item)
     
-    return result
+    res = add_skip_ptr(res)
+
+    return res
     
 def eval_AND(op1, op2):
     posting1, skips1 = get_posting_and_skip(op1)
     posting2, skips2 = get_posting_and_skip(op2)
 
-    result = ''
+    res = []
     if op1[0] == 'not' and op2[0] != 'not': # NOT a AND b
         #print('posting2', posting2)
         for posting in posting2:
             if posting not in posting1:
-                result += str(posting) + ' '
+                res.append(posting)
     elif op1[0] != 'not' and op2[0] == 'not': # a AND NOT b
         for posting in posting1:
             if posting not in posting2:
-                result += str(posting) + ' '
+                res.append(posting)
     elif op1[0] == 'not' and op2[0] == 'not': # NOT a AND NOT b
         global DOC_IDS
         for doc_id in DOC_IDS.rstrip().split(' '):
             int_form = int(doc_id)
             if int_form not in posting1 and int_form not in posting2:
-                result += doc_id + ' '
+                res.append(int_form)
     else: # pure a AND b
         ptr1 = 0
         ptr2 = 0
         while ptr1 < len(posting1) and ptr2 < len(posting2):
             if posting1[ptr1] == posting2[ptr2]:
-                result += str(posting1[ptr1]) + ' '
+                res.append(posting1[ptr1])
                 ptr1 += 1
                 ptr2 += 1
             elif posting1[ptr1] > posting2[ptr2]:
@@ -359,7 +366,10 @@ def eval_AND(op1, op2):
                     ptr1 = skips1[ptr1]
                 else:
                     ptr1 += 1
-    return result
+
+    res = add_skip_ptr(res)
+
+    return res
 
 def take_precedence(op1, op2):
     return OPERATORS.index(op1) <= OPERATORS.index(op2)

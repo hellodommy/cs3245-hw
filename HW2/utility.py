@@ -29,3 +29,16 @@ def add_skip_ptr(posting_list):
         for i in range(l):
             result += str(posting_list[i]) + ' '
     return result
+
+def string_to_list(string):
+    sep = string.rstrip().split(' ')
+    res = []
+    for s in sep:
+        res.append(int(s))
+    return res
+
+def list_to_string(my_list):
+    res = ''
+    for l in my_list:
+        res += str(l) + ' '
+    return res
