@@ -66,7 +66,7 @@ def run_search(dict_file, postings_file, queries_file, results_file):
             else:
                 rf.write(res + '\n')
         except AssertionError as error:
-            # error in evaluate_postfix() when there is no query
+            # assertion error in evaluate_postfix() when there is no query, final stack will be empty
             rf.write('\n')
         #print(query.rstrip() + ": " + res)
         #print(postfix_query)
