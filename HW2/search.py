@@ -14,6 +14,9 @@ def usage():
     print("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
 
 def read_dict(dict_file):
+    '''
+    Reads a dictionary from disk into memory
+    '''
     global DICTIONARY
     f = open(dict_file, 'r')
     for line in f.readlines():
@@ -197,6 +200,9 @@ def evaluate_postfix(postfix_expr):
     return list_to_string(reg_list).rstrip()
 
 def read_posting(seek_offset, bytes_to_read):
+    '''
+    Read specified bytes from the posting list at a byte offset
+    '''
     f = open(POSTINGS_FILE, 'r')
     result = ''
     f.seek(seek_offset)
@@ -274,6 +280,9 @@ def eval_simple(op):
 
 # FIXME: OR does not need skip list, maybe make another method to get just the posting list?
 def eval_NOT(op):
+    '''
+    Gets documents that do not contain op
+    '''
     global DOC_IDS
     posting, skips = get_posting_and_skip(op)
 
@@ -290,6 +299,9 @@ def eval_NOT(op):
 
 # FIXME: OR does not need skip list, maybe make another method to get just the posting list?
 def eval_OR(op1, op2):
+    '''
+    Gets union of documents containing op1 with documents containing op2
+    '''
     posting1, skips1 = get_posting_and_skip(op1)
     posting2, skips2 = get_posting_and_skip(op2)
 
@@ -329,6 +341,9 @@ def eval_OR(op1, op2):
     return res
     
 def eval_AND(op1, op2):
+    '''
+    Gets intersection of documents containing op1 with documents containing op2
+    '''
     posting1, skips1 = get_posting_and_skip(op1)
     posting2, skips2 = get_posting_and_skip(op2)
 
@@ -372,6 +387,9 @@ def eval_AND(op1, op2):
     return res
 
 def take_precedence(op1, op2):
+    '''
+    Checks if an operation takes precedence over another
+    '''
     return OPERATORS.index(op1) <= OPERATORS.index(op2)
 
 dictionary_file = postings_file = file_of_queries = output_file_of_results = None

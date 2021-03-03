@@ -56,6 +56,9 @@ def log_doc_ids(out_dict, out_postings):
     return len(str_form)
 
 def spimi_invert(chunk, in_dir):
+    '''
+    Conducts SPIMI Invert algorithm for each chunk of documents
+    '''
     global block_count
     global DOC_IDS
     block_count += 1
@@ -82,6 +85,9 @@ def spimi_invert(chunk, in_dir):
     write_block_to_disk(index, output_file)
 
 def write_block_to_disk(index, output_file):
+    '''
+    Writes out a block to disk in /blocks folder
+    '''
     global max_len
     index_items = index.items()
     max_len = max(max_len, len(index_items))
@@ -152,6 +158,9 @@ def merge(in_dir, out_dict, out_postings, offset):
                 removed_files.append(block_name)
 
 def write_to_file(file, content):
+    '''
+    Writes out lines to disk for search phase later
+    '''
     fw = open(file, 'a')
     fw.write(''.join(content))
     fw.close()

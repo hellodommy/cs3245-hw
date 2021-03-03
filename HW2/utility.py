@@ -2,6 +2,9 @@ from nltk.stem.porter import *
 import math
 
 def tokenize(word):
+    '''
+    Tokenises a given word with Porter Stemmer and case folding
+    '''
     stemmer = PorterStemmer()
     word = word.lower()
     word = stemmer.stem(word)
