@@ -82,7 +82,6 @@ def run_search(dict_file, postings_file, queries_file, results_file):
             infix_query = lines[i].rstrip()
             ranked_infix = rank_infx(infix_query)
             postfix_query = infix_to_postfix(ranked_infix)
-            print(postfix_query)
             res = evaluate_postfix(postfix_query)
             if res == '':
                 rf.write('\n')
@@ -164,24 +163,21 @@ def infix_to_postfix(expression):
     return output_queue
 
 # TODO: Optimise by evaluating those with lower frequency first
-# TODO: Optimise NOT (it is very stupid right now, comapring with whole document list)
 def evaluate_postfix(postfix_expr):
     '''
     Evaluates the given string list postfix expression
     '''
     stack = [] # last in, first out
-    counter = 0
     for item in postfix_expr:
-        print(counter)
-        counter += 1
         if item == "NOT":
-            '''
-            assume simple NOT
-            '''
             # apply NOT operator to popped operand
             # push result back onto stack
-            res = get_intermediate_NOT(stack.pop())
-            stack.append(['not', res])
+            curr = stack.pop() # may be operand or an intermediate NOT
+            res = eval_simple(curr)
+            if curr[0] == 'operand' or curr[0] == 'res':
+                stack.append(['not', res])
+            else: # previously was a NOT, will cancel out
+                stack.append(['res', res])
         elif item == "AND":
             # apply AND/OR operator to popped operands
             # push result back onto stack
@@ -193,30 +189,19 @@ def evaluate_postfix(postfix_expr):
         else:
             # item is an operand
             stack.append(['operand', item])
-        print("stack", stack)
     
     # stack will only have one item now: the final result
     assert len(stack) == 1
     res = stack.pop()
+
     if res[0] == 'operand': # if the query is simply a term
         res = eval_simple(res).rstrip()
         return res
     elif res[0] == 'not': # left with an intermediate 'not'
-        res = eval_NOT(str_to_list(res[1]))
-        return list_to_str(res)
+        res = eval_NOT(res).rstrip()
+        return res
 
     return res[1].rstrip()
-
-def str_to_list(string):
-    l = string.split(' ')
-    return l
-
-# FIXME: Adds space between 2 digit numbers if code is res += str(item) + ' '
-def list_to_str(l):
-    res = ''
-    for item in l:
-        res += str(item)
-    return res.rstrip()
 
 def read_posting(seek_offset, bytes_to_read):
     f = open(POSTINGS_FILE, 'r')
@@ -291,24 +276,19 @@ def eval_simple(op):
         res += str(item) + ' '
     return res
 
-def get_intermediate_NOT(op):
-    posting, skips = get_posting_and_skip(op)
-    return list_to_str(posting)
-
 # FIXME: OR does not need skip list, maybe make another method to get just the posting list?
-def eval_NOT(not_postings):
-    '''
-    Unlike other eval methods, returns a list instead of string because there are no skip pointers
-    '''
+def eval_NOT(op):
     global DOC_IDS
-    '''
-    Assume NOT is only paired with a term
-    '''
-    postings = []
-    for doc_id in DOC_IDS:
-        if doc_id not in not_postings:
-            postings.append(doc_id)
-    return postings
+    posting, skips = get_posting_and_skip(op)
+
+    res = ''
+    
+    for doc_id in DOC_IDS.rstrip().split(' '):
+        int_form = int(doc_id) # type casing string to integer for comparison
+        if int_form not in posting:
+            res += doc_id + ' '
+
+    return res
 
 # FIXME: OR does not need skip list, maybe make another method to get just the posting list?
 def eval_OR(op1, op2):
@@ -317,9 +297,11 @@ def eval_OR(op1, op2):
 
     # update intermediate NOT to be actual result
     if op1[0] == 'not':
-        posting1 = eval_NOT(posting1)
+        postings_str = eval_NOT(op1).rstrip()
+        posting1 = [int(i) for i in postings_str.split(' ')]
     if op2[0] == 'not':
-        posting2 = eval_NOT(posting2)
+        postings_str = eval_NOT(op2).rstrip()
+        posting2 = [int(i) for i in postings_str.split(' ')]
 
     ptr1 = 0
     ptr2 = 0
@@ -351,8 +333,8 @@ def eval_AND(op1, op2):
     posting2, skips2 = get_posting_and_skip(op2)
 
     result = ''
-
     if op1[0] == 'not' and op2[0] != 'not': # NOT a AND b
+        #print('posting2', posting2)
         for posting in posting2:
             if posting not in posting1:
                 result += str(posting) + ' '
@@ -362,10 +344,10 @@ def eval_AND(op1, op2):
                 result += str(posting) + ' '
     elif op1[0] == 'not' and op2[0] == 'not': # NOT a AND NOT b
         global DOC_IDS
-        doc_ids = DOC_IDS.rstrip().split(' ')
-        for doc_id in doc_ids:
-            if doc_id not in posting1 and doc_id not in posting2:
-                result += str(doc_id) + ' '
+        for doc_id in DOC_IDS.rstrip().split(' '):
+            int_form = int(doc_id)
+            if int_form not in posting1 and int_form not in posting2:
+                result += doc_id + ' '
     else: # pure a AND b
         ptr1 = 0
         ptr2 = 0
