@@ -52,7 +52,6 @@ def eval_simple(op):
         res += str(item) + ' '
     return res
 
-# FIXME: OR does not need skip list, maybe make another method to get just the posting list?
 def eval_NOT(op):
     '''
     Gets documents that do not contain `op`
@@ -70,7 +69,6 @@ def eval_NOT(op):
     
     return res
 
-# FIXME: OR does not need skip list, maybe make another method to get just the posting list?
 def eval_OR(op1, op2):
     '''
     Gets union of documents containing `op1` with documents containing `op2`

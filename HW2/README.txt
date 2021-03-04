@@ -1,4 +1,5 @@
 This is the README file for A0189690L and A0190198W's submission
+We are contactable at e0325274@u.nus.edu and e0325782@u.nus.edu respectively.
 
 == Python Version ==
 
