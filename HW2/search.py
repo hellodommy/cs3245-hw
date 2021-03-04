@@ -42,7 +42,10 @@ def run_search(dict_file, postings_file, queries_file, results_file):
             postfix_query = infix_to_postfix(optimized_infix)
             res = evaluate_postfix(postfix_query)
             if res == '':
-                rf.write('\n')
+                if i == len(lines) - 1:
+                    rf.write('')
+                else:
+                    rf.write('\n')
             else:
                 if i == len(lines) - 1:
                     rf.write(res)
@@ -50,7 +53,10 @@ def run_search(dict_file, postings_file, queries_file, results_file):
                     rf.write(res + '\n')
         except AssertionError as error:
             # assertion error in evaluate_postfix() when there is no query, final stack will be empty
-            rf.write('\n')
+            if i == len(lines) - 1:
+                rf.write('')
+            else:
+                rf.write('\n')
     
     rf.close()
 
