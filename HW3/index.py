@@ -13,8 +13,8 @@ from utility import tokenize, add_skip_ptr
 punc = string.punctuation
 block_count = 0  # running count of the number of blocks
 max_len = 0
-DOC_IDS = []
 BLOCKS = "blocks"
+DICTIONARY = {} # stores (key, value) as (doc_id, doc_len)
 
 def usage():
     print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
@@ -42,29 +42,27 @@ def build_index(in_dir, out_dict, out_postings):
     f = open(out_postings, 'w+')
     f.close()
 
-    offset = log_doc_ids(out_dict, out_postings)
+    offset = log_doc_length(out_dict, out_postings)
     merge(BLOCKS, out_dict, out_postings, offset)
 
 
-def log_doc_ids(out_dict, out_postings):
+def log_doc_length(out_dict, out_postings):
     '''
-    Collecting all docIDs to support NOT queries in search phase
+    Collecting all docIDs and their respective doc lengths for normalisation
     '''
-    global DOC_IDS
-    DOC_IDS.sort()
+    global DICTIONARY    
+    result = ''
 
-    str_form = ''
-    for doc_id in DOC_IDS:
-        str_form += str(doc_id) + ' '
+    for doc_id, doc_len in sorted(DICTIONARY.items()):
+        result += str(doc_id) + '-' + str(doc_len) + ' '
 
     # (doc_frequency, absolute_offset, accumulative_offset)
-    dict_expr = "* 0 0 " + str(len(str_form)) + "\n"
+    dict_expr = "* 0 0 " + str(len(result)) + "\n"
 
     write_to_file(out_dict, dict_expr)
-    write_to_file(out_postings, str_form)
+    write_to_file(out_postings, result)
 
-    return len(str_form)
-
+    return len(result)
 
 '''
 1. for each chunk, store a "master" index
@@ -76,19 +74,20 @@ def spimi_invert(chunk, in_dir):
     '''
     Executes SPIMI Invert algorithm for each chunk of documents
     '''
-    global block_count, DOC_IDS
+    global block_count, DICTIONARY
 
     index = {}
     for entry in chunk:
         entry_index = {}
-        DOC_IDS.append(int(entry))
         full_path = os.path.join(in_dir, entry)
         if os.path.isfile(full_path):
             file = open(full_path, "r")
             doc = file.read().replace('\n', '')
+            word_count = 0 # counter for document length
             for sent in sent_tokenize(doc):
                 for word in word_tokenize(sent):
                     if word not in punc:
+                        word_count += 1
                         tokenized = tokenize(word)
                         if (tokenized not in entry_index):
                             entry_index[tokenized] = [int(entry), 1]
@@ -104,6 +103,8 @@ def spimi_invert(chunk, in_dir):
                     curr_posting = index[token]
                     curr_posting.append(posting_list)
                     index[token] = curr_posting
+            # store the document length
+            DICTIONARY[int(entry)] = word_count
     block_count += 1
     output_file = "block" + str(block_count) + ".txt"
     write_block_to_disk(index, output_file)
@@ -161,7 +162,6 @@ def merge(in_dir, out_dict, out_postings, offset):
         if term_to_write == '':  # first term we are processing
             term_to_write = term
             posting_list_to_write = posting_list
-            ## idk
         elif term_to_write != term:  # time to write our current term to to disk because we encountered a new term
             posting_list_to_write.sort()
             posting_list_str = posting_to_str(posting_list_to_write)
@@ -173,8 +173,10 @@ def merge(in_dir, out_dict, out_postings, offset):
             write_to_file(out_postings, posting_list_str)
 
             offset += len(posting_list_str)
+
+            # resetting variables for new term
             term_to_write = term
-            posting_list_to_write = []
+            posting_list_to_write = posting_list
         else:  # curr_term == term
             posting_list_to_write.extend(posting_list)
 
