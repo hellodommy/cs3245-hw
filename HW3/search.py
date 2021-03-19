@@ -48,14 +48,20 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     rf.close()
 
 def calculate_tfidf_query(term, term_freq_in_query, corpus_size):
-    # FIXME: handle term_freq being 0
-    # FIXME: handle term not being in dictionary (doc_freq == 0)
+    if term_freq_in_query == 0:
+        return 0
+    doc_freq = get_doc_freq(term)
+    if doc_freq == 0:
+        return 0
+    
     tf = 1 + math.log(term_freq_in_query, 10)
-    idf = math.log(corpus_size / get_doc_freq(term), 10)
+    idf = math.log(corpus_size / doc_freq, 10)
     return tf * idf
 
 def calculate_tfidf_documents(term, term_freq):
-    # FIXME: handle term_freq being 0
+    if term_freq == 0:
+        return 0
+    
     tf = 1 + math.log(term_freq, 10)
     # idf not calculated for documents
     return tf
