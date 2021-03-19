@@ -33,17 +33,16 @@ def run_search(dict_file, postings_file, queries_file, results_file):
         query = lines[i].rstrip()
         doc_scores = calculate_cosine_scores(query)
         curated_docs = curate_doc_scores(doc_scores, 10)
-        string_result = list_to_string(curated_docs)
-        if string_result == '':
+        if curated_docs == '':
             if i == len(lines) - 1:
                 rf.write('')
             else:
                 rf.write('\n')
         else:
             if i == len(lines) - 1:
-                rf.write(string_result)
+                rf.write(curated_docs)
             else:
-                rf.write(string_result + '\n')
+                rf.write(curated_docs + '\n')
     
     rf.close()
 
@@ -90,10 +89,16 @@ def calculate_cosine_scores(query):
 
 def curate_doc_scores(doc_scores, limit):
     '''
-    Returns a list of length `limit` of doc IDs, sorted by score in descending order
+    Returns a stringified list of length `limit` of doc IDs, sorted by score in descending order
     '''
-    sorted_doc_ids = dict(sorted(doc_scores.items(), key = lambda doc_score: doc_score[1], reverse = True)).keys()
-    return list(sorted_doc_ids)[:limit]
+    sorted_docs = dict(sorted(doc_scores.items(), key = lambda doc_score: doc_score[1], reverse = True))
+    sorted_doc_ids = list(sorted_docs.keys())
+
+    # check if the query matches any documents at all
+    if sorted_docs[sorted_doc_ids[0]] == 0:
+        return ''
+    
+    return list_to_string(sorted_doc_ids[:limit])
 
 dictionary_file = postings_file = file_of_queries = output_file_of_results = None
 
