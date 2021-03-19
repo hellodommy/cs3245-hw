@@ -42,7 +42,7 @@ def list_to_string(my_list):
     res = ''
     for l in my_list:
         res += str(l) + ' '
-    return res
+    return res.rstrip()
 
 
 def split_bool_expr(expression):
