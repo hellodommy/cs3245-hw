@@ -1,0 +1,55 @@
+from utility import tokenize
+
+DICTIONARY = {}
+DOC_IDS = ''
+POSTINGS_FILE = ''
+
+def get_doc_ids():
+    global DOC_IDS
+    return DOC_IDS
+
+def set_postings_file(postings_file):
+    global POSTINGS_FILE
+    POSTINGS_FILE = postings_file
+
+def read_posting(byte_offset, bytes_to_read):
+    '''
+    Read specified bytes from the posting list at a byte offset
+    '''
+    f = open(POSTINGS_FILE, 'r')
+    result = ''
+    f.seek(byte_offset)
+    result += f.read(bytes_to_read)
+    f.close()
+    return result
+
+def read_dict(dict_file):
+    '''
+    Reads a dictionary from disk into memory
+    '''
+    global DICTIONARY, DOC_IDS
+    f = open(dict_file, 'r')
+    for line in f.readlines():
+        info = (line.rstrip()).split(' ')
+        if info[0] == '*': # encountered special term for all our doc ids
+            DOC_IDS = read_posting(int(info[2]), int(info[3]))
+            continue
+        # term: [doc_freq, absolute_offset, accumulative_offset]
+        DICTIONARY[info[0]] = [int(info[1]), int(info[2]), int(info[3])]
+    assert '*' not in DICTIONARY
+    f.close()
+ 
+def get_doc_freq(term):
+    '''
+    Returns document frequency for the term
+    '''
+    try:
+        return DICTIONARY[tokenize(term)][0]
+    except KeyError as error:
+        return 0
+
+def get_corpus_size():
+    '''
+    Returns the size of the entire corpus
+    '''
+    return len(DOC_IDS.rstrip().split(' '))
