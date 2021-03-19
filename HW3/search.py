@@ -3,7 +3,9 @@ import re
 import nltk
 import sys
 import getopt
-from data import set_postings_file, read_dict, get_corpus_size, get_doc_lengths, get_postings_list, get_doc_ids
+import math
+from collections import Counter
+from data import set_postings_file, read_dict, get_corpus_size, get_doc_lengths, get_postings_list, get_doc_ids, get_doc_freq
 from utility import list_to_string
 
 def usage():
@@ -45,13 +47,18 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     
     rf.close()
 
-def calculate_tfidf_query(query_term):
-    # TODO: implement
-    return 1
+def calculate_tfidf_query(term, term_freq_in_query, corpus_size):
+    # FIXME: handle term_freq being 0
+    # FIXME: handle term not being in dictionary (doc_freq == 0)
+    tf = 1 + math.log(term_freq_in_query, 10)
+    idf = math.log(corpus_size / get_doc_freq(term), 10)
+    return tf * idf
 
-def calculate_tfidf_documents(term):
-    # TODO: implement
-    return 1
+def calculate_tfidf_documents(term, term_freq):
+    # FIXME: handle term_freq being 0
+    tf = 1 + math.log(term_freq, 10)
+    # idf not calculated for documents
+    return tf
 
 def calculate_cosine_scores(query):
     '''
@@ -60,14 +67,19 @@ def calculate_cosine_scores(query):
     corpus_size = get_corpus_size()
     doc_lengths = get_doc_lengths()
     scores = dict(zip(get_doc_ids(), [0] * corpus_size))
-    for query_term in query.split(' '):
-        weight_tq = calculate_tfidf_query(query_term)
+    
+    query_terms = query.split(' ')
+    query_terms_counts = Counter(query_terms)
+    for query_term in query_terms:
+        weight_tq = calculate_tfidf_query(query_term, query_terms_counts[query_term], corpus_size)
         postings_list = get_postings_list(query_term)
         for (doc_id, term_freq) in postings_list:
-            scores[doc_id] += weight_tq * calculate_tfidf_documents(query_term)
+            scores[doc_id] += weight_tq * calculate_tfidf_documents(query_term, term_freq)
+    
     # normalize lengths
     for doc_id, score in scores.items():
         scores[doc_id] = score / doc_lengths[doc_id]
+    
     return scores
 
 def curate_doc_scores(doc_scores, limit):
