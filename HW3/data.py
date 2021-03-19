@@ -1,12 +1,20 @@
 from utility import tokenize
 
 DICTIONARY = {}
-DOC_IDS = ''
+DOC_ID_LEN_PAIRS = []
 POSTINGS_FILE = ''
 
 def get_doc_ids():
-    global DOC_IDS
-    return DOC_IDS
+    global DOC_ID_LEN_PAIRS
+    return map(lambda pair: pair[0], DOC_ID_LEN_PAIRS)
+
+def get_doc_lengths():
+    global DOC_ID_LEN_PAIRS
+    return map(lambda pair: pair[1], DOC_ID_LEN_PAIRS)
+
+def get_doc_id_len_pairs():
+    global DOC_ID_LEN_PAIRS
+    return DOC_ID_LEN_PAIRS
 
 def set_postings_file(postings_file):
     global POSTINGS_FILE
@@ -27,12 +35,15 @@ def read_dict(dict_file):
     '''
     Reads a dictionary from disk into memory
     '''
-    global DICTIONARY, DOC_IDS
+    global DICTIONARY, DOC_ID_LEN_PAIRS
     f = open(dict_file, 'r')
     for line in f.readlines():
         info = (line.rstrip()).split(' ')
         if info[0] == '*': # encountered special term for all our doc ids
-            DOC_IDS = read_posting(int(info[2]), int(info[3]))
+            doc_ids_w_length = read_posting(int(info[2]), int(info[3])).split(' ')
+            for id_len_str_pair in doc_ids_w_length:
+                id_len_str_split = id_len_str_pair.split('-')
+                DOC_ID_LEN_PAIRS.append((int(id_len_str_split[0]), int(id_len_str_split[1])))
             continue
         # term: [doc_freq, absolute_offset, accumulative_offset]
         DICTIONARY[info[0]] = [int(info[1]), int(info[2]), int(info[3])]
@@ -52,4 +63,4 @@ def get_corpus_size():
     '''
     Returns the size of the entire corpus
     '''
-    return len(DOC_IDS.rstrip().split(' '))
+    return len(DOC_ID_LEN_PAIRS)
