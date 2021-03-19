@@ -6,11 +6,11 @@ POSTINGS_FILE = ''
 
 def get_doc_ids():
     global DOC_ID_LEN_PAIRS
-    return map(lambda pair: pair[0], DOC_ID_LEN_PAIRS)
+    return list(map(lambda pair: pair[0], DOC_ID_LEN_PAIRS))
 
 def get_doc_lengths():
     global DOC_ID_LEN_PAIRS
-    return map(lambda pair: pair[1], DOC_ID_LEN_PAIRS)
+    return list(map(lambda pair: pair[1], DOC_ID_LEN_PAIRS))
 
 def get_doc_id_len_pairs():
     global DOC_ID_LEN_PAIRS
@@ -58,6 +58,19 @@ def get_doc_freq(term):
         return DICTIONARY[tokenize(term)][0]
     except KeyError as error:
         return 0
+
+def get_postings_list(term):
+    '''
+    Returns postings list for the term
+    '''
+    byte_offset = DICTIONARY[term][1]
+    bytes_to_read = DICTIONARY[term][2]
+    posting = read_posting(byte_offset, bytes_to_read)
+    postings_list = []
+    for id_len_str_pair in posting.split(' '):
+        id_len_str_split = id_len_str_pair.split('-')
+        postings_list.append((int(id_len_str_split[0]), int(id_len_str_split[1])))
+    return postings_list
 
 def get_corpus_size():
     '''
