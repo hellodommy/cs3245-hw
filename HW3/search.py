@@ -5,7 +5,7 @@ import sys
 import getopt
 import math
 from collections import Counter
-from data import set_postings_file, read_dict, get_corpus_size, get_doc_lengths, get_postings_list, get_doc_ids, get_doc_freq
+from data import set_postings_file, read_dict, get_corpus_size, get_doc_id_len_pairs, get_postings_list, get_doc_ids, get_doc_freq
 from utility import list_to_string
 
 def usage():
@@ -71,7 +71,7 @@ def calculate_cosine_scores(query):
     Returns a `scores` dictionary where the keys are doc IDs and the values are the cosine scores
     '''
     corpus_size = get_corpus_size()
-    doc_lengths = get_doc_lengths()
+    doc_id_len_pairs = get_doc_id_len_pairs()
     scores = dict(zip(get_doc_ids(), [0] * corpus_size))
     
     query_terms = query.split(' ')
@@ -84,7 +84,7 @@ def calculate_cosine_scores(query):
     
     # normalize lengths
     for doc_id, score in scores.items():
-        scores[doc_id] = score / doc_lengths[doc_id]
+        scores[doc_id] = score / doc_id_len_pairs[doc_id]
     
     return scores
 
@@ -93,7 +93,7 @@ def curate_doc_scores(doc_scores, limit):
     Returns a list of length `limit` of doc IDs, sorted by score in descending order
     '''
     sorted_doc_ids = dict(sorted(doc_scores.items(), key = lambda doc_score: doc_score[1], reverse = True)).keys()
-    return sorted_doc_ids[:limit]
+    return list(sorted_doc_ids)[:limit]
 
 dictionary_file = postings_file = file_of_queries = output_file_of_results = None
 
