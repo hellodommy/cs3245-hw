@@ -63,14 +63,16 @@ def get_postings_list(term):
     '''
     Returns postings list for the term
     '''
-    byte_offset = DICTIONARY[term][1]
-    bytes_to_read = DICTIONARY[term][2]
-    posting = read_posting(byte_offset, bytes_to_read)
-    postings_list = []
-    for id_len_str_pair in posting.split(' '):
-        id_len_str_split = id_len_str_pair.split('-')
-        postings_list.append((int(id_len_str_split[0]), int(id_len_str_split[1])))
-    return postings_list
+    try:
+        dict_info = DICTIONARY[tokenize(term)]
+        posting = read_posting(dict_info[1], dict_info[2])
+        postings_list = []
+        for id_len_str_pair in posting.split(' '):
+            id_len_str_split = id_len_str_pair.split('-')
+            postings_list.append((int(id_len_str_split[0]), int(id_len_str_split[1])))
+        return postings_list
+    except KeyError as error:
+        return []
 
 def get_corpus_size():
     '''
