@@ -1,4 +1,5 @@
-This is the README file for A0000000X's submission
+This is the README file for A0189690L and A0190198W's submission
+We are contactable at e0325274@u.nus.edu and e0325782@u.nus.edu respectively.
 
 == Python Version ==
 
@@ -21,9 +22,9 @@ and formatted correctly.
 
 Please put a "x" (without the double quotes) into the bracket of the appropriate statement.
 
-[ ] I/We, A0000000X, certify that I/we have followed the CS 3245 Information
-Retrieval class guidelines for homework assignments.  In particular, I/we
-expressly vow that I/we have followed the Facebook rule in discussing
+[x] We, A0189690L and A0190198W, certify that we have followed the CS 3245 Information
+Retrieval class guidelines for homework assignments.  In particular, we
+expressly vow that we have followed the Facebook rule in discussing
 with others in doing the assignment and did not take notes (digital or
 printed) from the discussions.  
 
