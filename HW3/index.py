@@ -83,11 +83,9 @@ def spimi_invert(chunk, in_dir):
         if os.path.isfile(full_path):
             file = open(full_path, "r")
             doc = file.read().replace('\n', '')
-            word_count = 0 # counter for document length
             for sent in sent_tokenize(doc):
                 for word in word_tokenize(sent):
                     if word not in punc:
-                        word_count += 1
                         tokenized = tokenize(word)
                         if (tokenized not in entry_index):
                             entry_index[tokenized] = [int(entry), 1]
@@ -95,8 +93,11 @@ def spimi_invert(chunk, in_dir):
                             curr_count = entry_index[tokenized][1]
                             entry_index[tokenized] = [int(entry), curr_count + 1]
             file.close()
+            doc_len = 0
             # accumulate the entry_index to master index
             for token, posting_list in entry_index.items():
+                # posting list has the format [docID, term freq]
+                doc_len += (1 + math.log10(posting_list[1]))**2
                 if token not in index:
                     index[token] = [posting_list]
                 else:
@@ -104,7 +105,7 @@ def spimi_invert(chunk, in_dir):
                     curr_posting.append(posting_list)
                     index[token] = curr_posting
             # store the document length
-            DICTIONARY[int(entry)] = word_count
+            DICTIONARY[int(entry)] = math.sqrt(doc_len)
     block_count += 1
     output_file = "block" + str(block_count) + ".txt"
     write_block_to_disk(index, output_file)

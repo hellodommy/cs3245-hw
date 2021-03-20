@@ -43,7 +43,7 @@ def read_dict(dict_file):
             doc_ids_w_length = read_posting(int(info[2]), int(info[3])).rstrip().split(' ')
             for id_len_str_pair in doc_ids_w_length:
                 id_len_str_split = id_len_str_pair.split('-')
-                DOC_ID_LEN_PAIRS[int(id_len_str_split[0])] = int(id_len_str_split[1])
+                DOC_ID_LEN_PAIRS[int(id_len_str_split[0])] = float(id_len_str_split[1])
             continue
         # term: [doc_freq, absolute_offset, accumulative_offset]
         DICTIONARY[info[0]] = [int(info[1]), int(info[2]), int(info[3])]
