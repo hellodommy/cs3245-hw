@@ -35,14 +35,17 @@ def run_search(dict_file, postings_file, queries_file, results_file):
         doc_scores = calculate_cosine_scores(query)
         curated_docs = curate_doc_scores(doc_scores)
 
-        if curated_docs[0][1] == 0:
+        if curated_docs[0][1] == 0: # none of the docs have a non-zero score
             if i == len(lines) - 1:
                 rf.write('')
             else:
                 rf.write('\n')
         else:
             for j in range(10):
-                if j == len(curated_docs) - 1:
+                val = curated_docs[j][0]
+                if val == 0: # subsequent docs have zero score
+                    break
+                if j == len(curated_docs) - 1: # last entry, do not append with space
                     rf.write(str(curated_docs[j][0]))
                 else:
                     rf.write(str(curated_docs[j][0]) + ' ')
