@@ -8,7 +8,7 @@ import os
 import _pickle as pickle
 import math
 from queue import PriorityQueue
-from utility import tokenize, add_skip_ptr
+from utility import tokenize
 
 punc = string.punctuation
 block_count = 0  # running count of the number of blocks

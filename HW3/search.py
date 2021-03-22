@@ -6,7 +6,6 @@ import getopt
 import math
 from collections import Counter
 from data import set_postings_file, read_dict, get_corpus_size, get_doc_id_len_pairs, get_postings_list, get_doc_ids, get_doc_freq
-from utility import list_to_string
 import heapq as hq
 
 def usage():
