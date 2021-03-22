@@ -12,10 +12,11 @@ def usage():
     print("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
 
 def run_search(dict_file, postings_file, queries_file, results_file):
-    """
-    using the given dictionary file and postings file,
-    perform searching on the given queries file and output the results to a file
-    """
+    '''
+    Uses the given dictionary file and postings file
+    to perform searching on the given queries file and
+    output the results to a file
+    '''
     print('running search on the queries...')
     # This is an empty method
     # Pls implement your code in below
@@ -54,6 +55,9 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     rf.close()
 
 def calculate_tfidf_query(term, term_freq_in_query, corpus_size):
+    '''
+    Calculates the tf-idf (ltc) for a query
+    '''
     if term_freq_in_query == 0:
         return 0
     doc_freq = get_doc_freq(term)
@@ -65,6 +69,9 @@ def calculate_tfidf_query(term, term_freq_in_query, corpus_size):
     return tf * idf
 
 def calculate_tfidf_documents(term, term_freq):
+    '''
+    Calculates the tf-idf (lnc) for a document
+    '''
     if term_freq == 0:
         return 0
     

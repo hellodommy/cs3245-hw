@@ -21,10 +21,10 @@ def usage():
 
 
 def build_index(in_dir, out_dict, out_postings):
-    """
-    build index from documents stored in the input directory,
+    '''
+    Builds index from documents stored in the input directory,
     then output the dictionary file and postings file
-    """
+    '''
     print('indexing...')
     # This is an empty method
     # Pls implement your code in below
@@ -42,13 +42,13 @@ def build_index(in_dir, out_dict, out_postings):
     f = open(out_postings, 'w+')
     f.close()
 
-    offset = log_doc_length(out_dict, out_postings)
+    offset = record_doc_length(out_dict, out_postings)
     merge(BLOCKS, out_dict, out_postings, offset)
 
 
-def log_doc_length(out_dict, out_postings):
+def record_doc_length(out_dict, out_postings):
     '''
-    Collecting all docIDs and their respective doc lengths for normalisation
+    Records docIDs and their respective normalised doc lengths
     '''
     global DICTIONARY    
     result = ''
@@ -64,15 +64,13 @@ def log_doc_length(out_dict, out_postings):
 
     return len(result)
 
-'''
-1. for each chunk, store a "master" index
-2. for each entry in each chunk
-    for each term, collect term freq
-    add this [doc id, term freq] to master index
-'''
+
 def spimi_invert(chunk, in_dir):
     '''
     Executes SPIMI Invert algorithm for each chunk of documents
+    For each chunk, store a master index
+    For each entry in the chunk, collect term frequencies and calculate the weights (for normalised doc length)
+    Add [doc id, term freq] to the master index and log the normalised document length
     '''
     global block_count, DICTIONARY
 
@@ -129,7 +127,7 @@ def write_block_to_disk(index, output_file):
 
 def merge(in_dir, out_dict, out_postings, offset):
     '''
-    Perform n-way merge, reading limit-number of entries from each block at a time
+    Performs n-way merge, reading limit-number of entries from each block at a time
     '''
     global max_len
     limit = 5
@@ -192,10 +190,14 @@ def merge(in_dir, out_dict, out_postings, offset):
                 removed_files.append(block_name)
 
 def posting_to_str(posting_list):
+    '''
+    Converts a posting list to string form of docID-termFreq
+    '''
     result = ''
     for posting in posting_list:
         result += str(posting[0]) + '-' + str(posting[1]) + ' '
     return result
+
 
 def write_to_file(file, content):
     '''

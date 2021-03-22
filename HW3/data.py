@@ -22,7 +22,7 @@ def set_postings_file(postings_file):
 
 def read_posting(byte_offset, bytes_to_read):
     '''
-    Read specified bytes from the posting list at a byte offset
+    Reads specified bytes from the posting list at a byte offset
     '''
     f = open(POSTINGS_FILE, 'r')
     result = ''
@@ -33,7 +33,7 @@ def read_posting(byte_offset, bytes_to_read):
 
 def read_dict(dict_file):
     '''
-    Reads a dictionary from disk into memory
+    Reads dictionary from disk into memory
     '''
     global DICTIONARY, DOC_ID_LEN_PAIRS
     f = open(dict_file, 'r')
