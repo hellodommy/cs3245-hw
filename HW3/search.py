@@ -7,6 +7,7 @@ import math
 from collections import Counter
 from data import set_postings_file, read_dict, get_corpus_size, get_doc_id_len_pairs, get_postings_list, get_doc_ids, get_doc_freq
 from utility import list_to_string
+import heapq as hq
 
 def usage():
     print("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
@@ -32,17 +33,21 @@ def run_search(dict_file, postings_file, queries_file, results_file):
         rf = open(results_file, 'a')
         query = lines[i].rstrip()
         doc_scores = calculate_cosine_scores(query)
-        curated_docs = curate_doc_scores(doc_scores, 10)
-        if curated_docs == '':
+        curated_docs = curate_doc_scores(doc_scores)
+
+        if curated_docs[0][1] == 0:
             if i == len(lines) - 1:
                 rf.write('')
             else:
                 rf.write('\n')
         else:
-            if i == len(lines) - 1:
-                rf.write(curated_docs)
-            else:
-                rf.write(curated_docs + '\n')
+            for j in range(10):
+                if j == len(curated_docs) - 1:
+                    rf.write(str(curated_docs[j][0]))
+                else:
+                    rf.write(str(curated_docs[j][0]) + ' ')
+            if i != len(lines) - 1:
+                rf.write('\n')
     
     rf.close()
 
@@ -87,18 +92,16 @@ def calculate_cosine_scores(query):
     
     return scores
 
-def curate_doc_scores(doc_scores, limit):
-    '''
-    Returns a stringified list of length `limit` of doc IDs, sorted by score in descending order
-    '''
-    sorted_docs = dict(sorted(doc_scores.items(), key = lambda doc_score: doc_score[1], reverse = True))
-    sorted_doc_ids = list(sorted_docs.keys())
 
-    # check if the query matches any documents at all
-    if sorted_docs[sorted_doc_ids[0]] == 0:
-        return ''
-    
-    return list_to_string(sorted_doc_ids[:limit])
+def curate_doc_scores(scores):
+    '''
+    Returns the top 10 scoring documents using a max heap
+    '''
+    heap = [(-value, key) for key, value in scores.items()]
+    largest = hq.nsmallest(10, heap)
+    largest = [(key, -value) for value, key in largest]
+
+    return largest
 
 dictionary_file = postings_file = file_of_queries = output_file_of_results = None
 

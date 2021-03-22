@@ -3,7 +3,7 @@ We are contactable at e0325274@u.nus.edu and e0325782@u.nus.edu respectively.
 
 == Python Version ==
 
-I'm (We're) using Python Version <3.7.6 or replace version number> for
+I'm (We're) using Python Version 3.7.3 for
 this assignment.
 
 == General Notes about this assignment ==
@@ -41,3 +41,5 @@ We suggest that we should be graded as follows:
 
 <Please list any websites and/or people you consulted with for this
 assignment and state their role>
+
+- Implementation of max heap, sorted by value: https://stackoverflow.com/questions/14795333/how-to-maintain-dictionary-in-a-heap-in-python/14795642#14795642
