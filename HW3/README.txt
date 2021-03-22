@@ -12,11 +12,33 @@ Give an overview of your program, describe the important algorithms/steps
 in your program, and discuss your experiments in general.  A few paragraphs 
 are usually sufficient.
 
+Our program indexes the corpus using SPIMI as before in HW2.
+Some modifications were made to keep the term frequency along with the docID
+in the posting list,
+and to keep the weighted tf of terms to get the normalised doc length.
+
+Searching is done using the cosinescore algorithm from Lecture 7, Slide 38.
+tf-idf is calculated for query and documents,
+then the score is added to a scores dictionary.
+A max heap of size 10 is used to get the top 10 documents from the scores dictionary,
+so that the large scores dictionary does not have to be sorted.
+
+Writing to the result is stopped once we encounter a score of 0
+which means that the current document and subsequent ones are
+not a match and should not be included in the result.
+
+This ensures that all docIDs within the top 10 are a match.
+
 == Files included with this submission ==
 
 List the files in your submission here and provide a short 1 line
 description of each file.  Make sure your submission's files are named
 and formatted correctly.
+
+index.py - Indexes the corpus using SPIMI
+search.py - Searches the corpus usiing ranked retrieval
+data.py - Contains methods that access the dictionary and the respective posting list
+utility.py - Contains utility function shared by other modules (tokenizer)
 
 == Statement of individual work ==
 
