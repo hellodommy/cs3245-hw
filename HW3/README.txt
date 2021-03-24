@@ -3,8 +3,7 @@ We are contactable at e0325274@u.nus.edu and e0325782@u.nus.edu respectively.
 
 == Python Version ==
 
-I'm (We're) using Python Version 3.7.3 for
-this assignment.
+We're using Python Version 3.7.3 for this assignment.
 
 == General Notes about this assignment ==
 
