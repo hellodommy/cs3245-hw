@@ -139,7 +139,7 @@ def calculate_cosine_scores(query):
     #get all the posting list include combine and that all
     #[[ha, ah, ha2, This is cold], [This is hot]]
     #[1,2,3,4,5,6]
-    main_posting_list = get_main_posting_list(query_terms);
+    main_posting_list = get_main_posting_list(query_terms)
     # calculation
     for query_term in query_terms_counts:
         weight_tq = calculate_tfidf_query(query_term, query_terms_counts[query_term], corpus_size)
