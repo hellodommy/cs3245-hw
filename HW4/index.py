@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import re
 from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk.util import bigrams
 import sys
 import getopt
 import string
@@ -87,9 +88,11 @@ def spimi_invert(chunk, in_dir):
     for entry in chunk:
         entry_index = {}
         doc_id, title, content, date, court = entry[0], entry[1], entry[2], entry[3], entry[4]
+        title_words = []
         for word in word_tokenize(title.rstrip()):  # title
             if word not in punc:
                     tokenized = tokenize(word)
+                    title_words.append(tokenized)
                     if (tokenized not in entry_index):
                         zones = set()
                         zones.add('b')  # add title zone
@@ -100,10 +103,23 @@ def spimi_invert(chunk, in_dir):
                         zones.add('b')
                         entry_index[tokenized] = [
                             int(doc_id), curr_count + 1, zones]
+        for entry in list(bigrams(title_words)):  # title bigrams
+            bigram = entry[0] + "-" + entry[1]
+            if (bigram not in entry_index):
+                zones = set()
+                zones.add('b')  # add title zone
+                entry_index[bigram] = [int(doc_id), 1, zones]
+            else:
+                curr_count = entry_index[bigram][1]
+                zones = entry_index[bigram][2]
+                zones.add('b')
+                entry_index[bigram] = [int(doc_id), curr_count + 1, zones]
+        content_words = []
         for sent in sent_tokenize(content): # content
             for word in word_tokenize(sent):
                  if word not in punc:
                         tokenized = tokenize(word)
+                        content_words.append(tokenized)
                         if (tokenized not in entry_index):
                             zones = set()
                             zones.add('c') # add content zone
@@ -113,6 +129,17 @@ def spimi_invert(chunk, in_dir):
                             zones = entry_index[tokenized][2]
                             zones.add('c')
                             entry_index[tokenized] = [int(doc_id), curr_count + 1, zones]
+        for entry in list(bigrams(content_words)):  # content bigrams
+            bigram = entry[0] + "-" + entry[1]
+            if (bigram not in entry_index):
+                zones = set()
+                zones.add('c')  # add content zone
+                entry_index[bigram] = [int(doc_id), 1, zones]
+            else:
+                curr_count = entry_index[bigram][1]
+                zones = entry_index[bigram][2]
+                zones.add('c')
+                entry_index[bigram] = [int(doc_id), curr_count + 1, zones]
         for word in word_tokenize(date.rstrip()):  # date
             if word not in punc:
                     tokenized = tokenize(word)
@@ -125,9 +152,11 @@ def spimi_invert(chunk, in_dir):
                         zones = entry_index[tokenized][2]
                         zones.add('d')
                         entry_index[tokenized] = [ int(doc_id), curr_count + 1, zones]
+        court_words = []
         for word in word_tokenize(court.rstrip()):  # court
             if word not in punc:
                 tokenized = tokenize(word)
+                court_words.append(tokenized)
                 if (tokenized not in entry_index):
                     zones = set()
                     zones.add('e')  # add content zone
@@ -138,6 +167,17 @@ def spimi_invert(chunk, in_dir):
                     zones.add('e')
                     entry_index[tokenized] = [
                         int(doc_id), curr_count + 1, zones]
+        for entry in list(bigrams(court_words)):  # court bigrams
+            bigram = entry[0] + "-" + entry[1]
+            if (bigram not in entry_index):
+                zones = set()
+                zones.add('e')  # add content zone
+                entry_index[bigram] = [int(doc_id), 1, zones]
+            else:
+                curr_count = entry_index[bigram][1]
+                zones = entry_index[bigram][2]
+                zones.add('e')
+                entry_index[bigram] = [int(doc_id), curr_count + 1, zones]
         doc_len = 0
         for token, posting_list in entry_index.items():
             doc_len += (1 + math.log10(posting_list[1]))**2
