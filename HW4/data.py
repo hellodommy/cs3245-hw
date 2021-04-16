@@ -72,7 +72,6 @@ def or_op(pl_1, pl_2):
         result.sort()
         return result
 
-    
 
 def and_op(pl_1, pl_2):
     result = []
@@ -103,7 +102,9 @@ def get_postings_list(query_term):
         postings_list = {}
         for id_len_str_pair in posting.split(' '):
             id_len_str_split = id_len_str_pair.split('-')
-            postings_list[int(id_len_str_split[0])] = int(id_len_str_split[1])
+            zones = id_len_str_split[2].split(',')
+            zones = [int(integer) for integer in zones]
+            postings_list[int(id_len_str_split[0])] = zones
         return postings_list
     except KeyError as error:
         return {}
@@ -130,10 +131,10 @@ def get_main_posting_list(query_terms):
         #[ha, ah, ha2, This is cold]
         intermediate_posting_list = []
         for term in segment:
-            split_term = term.split(' ')
+            split_term = term.split('_')
             if len(split_term) == 3:
-                biword_1 = split_term[0] + " " + split_term[1]
-                biword_2 = split_term[1] + " " + split_term[2]
+                biword_1 = split_term[0] + "_" + split_term[1]
+                biword_2 = split_term[1] + "_" + split_term[2]
                 temp = and_op(get_intermediate_postings(biword_1), get_intermediate_postings(biword_2))
                 intermediate_posting_list = or_op(intermediate_posting_list, temp)
             else:

@@ -147,7 +147,7 @@ def gen_unigram(entry_index, doc_id, section_content, section_words, zone_index)
 
 def gen_bigram(entry_index, doc_id, section_words, zone_index):
     for entry in list(bigrams(section_words)):
-        bigram = entry[0] + "-" + entry[1]
+        bigram = entry[0] + "_" + entry[1]
         if bigram not in entry_index:
             zones = [0, 0, 0, 0]
             zones[zone_index] += 1
@@ -246,8 +246,9 @@ def posting_to_str(posting_list):
     result = ''
     for posting in posting_list:
         separator = ','
-        zones = separator.join(str(posting[2]))
-        result += str(posting[0]) + '-' + str(posting[1]) + '-' + zones + ' '
+        zones_lst = [str(integer) for integer in posting[2]]
+        zones_str = separator.join(zones_lst)
+        result += str(posting[0]) + '-' + str(posting[1]) + '-' + zones_str + ' '
     return result
 
 input_directory = output_file_dictionary = output_file_postings = None

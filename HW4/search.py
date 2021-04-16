@@ -56,7 +56,7 @@ def run_search(dict_file, postings_file, queries_file, results_file):
 def parse_query(query):
     """
     Example - Query: 'what is "fertility treatment" AND damages'
-    Output - [['what', 'is', 'fertility treatment'], ['damages']]
+    Output - [['what', 'is', 'fertility_treatment'], ['damages']]
     """
     parsed_terms = []
     query_terms = [term.split(' ') for term in query.split(' AND ')]
@@ -69,7 +69,7 @@ def parse_query(query):
                 segment_terms.append(segment[i].strip('"'))
             elif segment[i].startswith('"'):
                 is_quote = True
-                quote += segment[i].strip('"') + " "
+                quote += segment[i].strip('"') + "_"
             elif segment[i].endswith('"'):
                 is_quote = False
                 quote += segment[i].strip('"')
@@ -78,14 +78,14 @@ def parse_query(query):
             elif not is_quote:
                 segment_terms.append(segment[i])
             else:
-                quote += segment[i] + " "
+                quote += segment[i] + "_"
         parsed_terms.append(segment_terms)
 
     return parsed_terms
 
 
 def generate_syn(prev_value, next_value):
-    name = next_value.name().replace('_', ' ')
+    name = next_value.name()
     if name not in prev_value:
         prev_value.append(name)
     return prev_value
@@ -96,8 +96,6 @@ def query_expand(parsed_terms):
     for segment in parsed_terms:
         segment_terms = []
         for term in segment:
-            if len(term) > 1:
-                term = term.replace(' ', '_')
             for syn in wn.synsets(term):
                 lemma_arr = syn.lemmas()
                 segment_terms = functools.reduce(generate_syn, lemma_arr, segment_terms)
@@ -122,15 +120,19 @@ def calculate_tfidf_query(term, term_freq_in_query, corpus_size):
     return tf * idf
 
 
-def calculate_tfidf_documents(term_freq):
+def calculate_tfidf_documents(zone):
     """
     Calculates the tf-idf (lnc) for a document
     """
-    if term_freq == 0:
-        return 0
+    # title (0), content (1), date (2), court (3)
+    alpha = [0.470588, 0.176471, 0.117647, 0.235294]
+    result = 0
+    for i in range(len(zone)):
+        if zone[i] != 0:
+            tf = 1 + math.log(zone[i], 10)
+            result += alpha[i] * tf
 
-    tf = 1 + math.log(term_freq, 10)
-    return tf  # idf not calculated for documents
+    return result  # idf not calculated for documents
 
 
 def add_to_count(term, dictionary):
@@ -144,10 +146,10 @@ def counter(query_terms):
     count_dict = {}
     for segment in query_terms:
         for term in segment:
-            split_term = term.split(' ')
+            split_term = term.split('_')
             if len(split_term) == 3:
                 for item in list(ngrams(split_term, 2)):
-                    to_add = item[0] + " " + item[1]
+                    to_add = item[0] + '_' + item[1]
                     add_to_count(to_add, count_dict)
             else:
                 add_to_count(term, count_dict)
@@ -160,10 +162,10 @@ def calculate_cosine_scores(query_terms, query_terms_counts):
     """
     corpus_size = get_corpus_size()
     doc_id_len_pairs = get_doc_id_len_pairs()
-    scores = dict(zip(get_doc_ids(), [0] * corpus_size))
 
     # retrieve all documents that fulfils the boolean requirement of query
     main_posting_list = get_main_posting_list(query_terms)
+    scores = dict(zip(main_posting_list, [0] * len(main_posting_list)))
 
     # calculation
     for query_term in query_terms_counts:
