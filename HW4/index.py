@@ -18,15 +18,17 @@ max_len = 0
 BLOCKS = "blocks"
 DICTIONARY = {}  # stores (key, value) as (doc_id, doc_len)
 
+
 def usage():
     print("usage: " +
           sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
 
+
 def build_index(in_dir, out_dict, out_postings):
-    '''
+    """
     Builds index from documents stored in the input directory,
     then output the dictionary file and postings file
-    '''
+    """
     print('indexing...')
     # This is an empty method
     # Pls implement your code in below
@@ -37,11 +39,10 @@ def build_index(in_dir, out_dict, out_postings):
     with open(in_dir) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         doc_list = list(csv_reader)
-        doc_list = doc_list[1:] # ignore header line
-        doc_chunks = [doc_list[i * limit:(i + 1) * limit]
-                    for i in range((len(doc_list) + limit - 1) // limit)]
+        doc_list = doc_list[1:]  # ignore header line
+        doc_chunks = [doc_list[i * limit:(i + 1) * limit] for i in range((len(doc_list) + limit - 1) // limit)]
         for chunk in doc_chunks:
-            spimi_invert(chunk, in_dir)
+            spimi_invert(chunk)
     f = open(out_dict, 'w+')
     f.close()
     f = open(out_postings, 'w+')
@@ -49,10 +50,11 @@ def build_index(in_dir, out_dict, out_postings):
     offset = record_doc_length(out_dict, out_postings)
     merge(BLOCKS, out_dict, out_postings, offset)
 
+
 def record_doc_length(out_dict, out_postings):
-    '''
+    """
     Records docIDs and their respective normalised doc lengths
-    '''
+    """
     global DICTIONARY
     result = ''
 
@@ -67,117 +69,50 @@ def record_doc_length(out_dict, out_postings):
 
     return len(result)
 
+
 def write_to_file(file, content):
-    '''
+    """
     Writes out lines to disk for search phase later
-    '''
+    """
     fw = open(file, 'a')
     fw.write(''.join(content))
     fw.close()
 
-def spimi_invert(chunk, in_dir):
-    '''
+
+def spimi_invert(chunk):
+    """
     Executes SPIMI Invert algorithm for each chunk of documents
     For each chunk, store a master index
     For each entry in the chunk, collect term frequencies and calculate the weights (for normalised doc length)
     Add [doc id, term freq] to the master index and log the normalised document length
-    '''
+    """
     global block_count, DICTIONARY
     print('block:', block_count)
-    index = {} # index for the whole chunk
+    index = {}  # index for the whole chunk
+
     for entry in chunk:
         entry_index = {}
         doc_id, title, content, date, court = entry[0], entry[1], entry[2], entry[3], entry[4]
+
+        # process title words
         title_words = []
-        for word in word_tokenize(title.rstrip()):  # title
-            if word not in punc:
-                    tokenized = tokenize(word)
-                    title_words.append(tokenized)
-                    if (tokenized not in entry_index):
-                        zones = set()
-                        zones.add('b')  # add title zone
-                        entry_index[tokenized] = [int(doc_id), 1, zones]
-                    else:
-                        curr_count = entry_index[tokenized][1]
-                        zones = entry_index[tokenized][2]
-                        zones.add('b')
-                        entry_index[tokenized] = [
-                            int(doc_id), curr_count + 1, zones]
-        for entry in list(bigrams(title_words)):  # title bigrams
-            bigram = entry[0] + "-" + entry[1]
-            if (bigram not in entry_index):
-                zones = set()
-                zones.add('b')  # add title zone
-                entry_index[bigram] = [int(doc_id), 1, zones]
-            else:
-                curr_count = entry_index[bigram][1]
-                zones = entry_index[bigram][2]
-                zones.add('b')
-                entry_index[bigram] = [int(doc_id), curr_count + 1, zones]
+        gen_unigram(entry_index, doc_id, title.rstrip(), title_words, 0)
+        gen_bigram(entry_index, doc_id, title_words, 0)
+
+        # process content words
         content_words = []
-        for sent in sent_tokenize(content): # content
-            for word in word_tokenize(sent):
-                 if word not in punc:
-                        tokenized = tokenize(word)
-                        content_words.append(tokenized)
-                        if (tokenized not in entry_index):
-                            zones = set()
-                            zones.add('c') # add content zone
-                            entry_index[tokenized] = [int(doc_id), 1, zones]
-                        else:
-                            curr_count = entry_index[tokenized][1]
-                            zones = entry_index[tokenized][2]
-                            zones.add('c')
-                            entry_index[tokenized] = [int(doc_id), curr_count + 1, zones]
-        for entry in list(bigrams(content_words)):  # content bigrams
-            bigram = entry[0] + "-" + entry[1]
-            if (bigram not in entry_index):
-                zones = set()
-                zones.add('c')  # add content zone
-                entry_index[bigram] = [int(doc_id), 1, zones]
-            else:
-                curr_count = entry_index[bigram][1]
-                zones = entry_index[bigram][2]
-                zones.add('c')
-                entry_index[bigram] = [int(doc_id), curr_count + 1, zones]
-        for word in word_tokenize(date.rstrip()):  # date
-            if word not in punc:
-                    tokenized = tokenize(word)
-                    if (tokenized not in entry_index):
-                        zones = set()
-                        zones.add('d')  # add date zone
-                        entry_index[tokenized] = [int(doc_id), 1, zones]
-                    else:
-                        curr_count = entry_index[tokenized][1]
-                        zones = entry_index[tokenized][2]
-                        zones.add('d')
-                        entry_index[tokenized] = [ int(doc_id), curr_count + 1, zones]
+        for sent in sent_tokenize(content):  # content
+            gen_unigram(entry_index, doc_id, sent, content_words, 1)
+        gen_bigram(entry_index, doc_id, content_words, 1)
+
+        # process dates
+        gen_unigram(entry_index, doc_id, date.rstrip(), [], 2)
+
+        # process court words
         court_words = []
-        for word in word_tokenize(court.rstrip()):  # court
-            if word not in punc:
-                tokenized = tokenize(word)
-                court_words.append(tokenized)
-                if (tokenized not in entry_index):
-                    zones = set()
-                    zones.add('e')  # add content zone
-                    entry_index[tokenized] = [int(doc_id), 1, zones]
-                else:
-                    curr_count = entry_index[tokenized][1]
-                    zones = entry_index[tokenized][2]
-                    zones.add('e')
-                    entry_index[tokenized] = [
-                        int(doc_id), curr_count + 1, zones]
-        for entry in list(bigrams(court_words)):  # court bigrams
-            bigram = entry[0] + "-" + entry[1]
-            if (bigram not in entry_index):
-                zones = set()
-                zones.add('e')  # add content zone
-                entry_index[bigram] = [int(doc_id), 1, zones]
-            else:
-                curr_count = entry_index[bigram][1]
-                zones = entry_index[bigram][2]
-                zones.add('e')
-                entry_index[bigram] = [int(doc_id), curr_count + 1, zones]
+        gen_unigram(entry_index, doc_id, court.rstrip(), court_words, 3)
+        gen_bigram(entry_index, doc_id, court_words, 3)
+
         doc_len = 0
         for token, posting_list in entry_index.items():
             doc_len += (1 + math.log10(posting_list[1]))**2
@@ -192,16 +127,48 @@ def spimi_invert(chunk, in_dir):
     output_file = "block" + str(block_count) + ".txt"
     write_block_to_disk(index, output_file)
 
+
+def gen_unigram(entry_index, doc_id, section_content, section_words, zone_index):
+    for word in word_tokenize(section_content):
+        if word not in punc:
+            tokenized = tokenize(word)
+            section_words.append(tokenized)
+            if tokenized not in entry_index:
+                zones = [0, 0, 0, 0]
+                zones[zone_index] += 1  # add title zone
+                entry_index[tokenized] = [int(doc_id), 1, zones]
+            else:
+                curr_count = entry_index[tokenized][1]
+                zones = entry_index[tokenized][2]
+                zones[zone_index] += 1
+                entry_index[tokenized] = [
+                    int(doc_id), curr_count + 1, zones]
+
+
+def gen_bigram(entry_index, doc_id, section_words, zone_index):
+    for entry in list(bigrams(section_words)):
+        bigram = entry[0] + "-" + entry[1]
+        if bigram not in entry_index:
+            zones = [0, 0, 0, 0]
+            zones[zone_index] += 1
+            entry_index[bigram] = [int(doc_id), 1, zones]
+        else:
+            curr_count = entry_index[bigram][1]
+            zones = entry_index[bigram][2]
+            zones[zone_index] += 1
+            entry_index[bigram] = [int(doc_id), curr_count + 1, zones]
+
+
 def write_block_to_disk(index, output_file):
-    '''
+    """
     Writes out a block to disk in /blocks folder
-    '''
+    """
     global max_len
     index_items = index.items()
     max_len = max(max_len, len(index_items))
     for key, value in index_items:  # sorting each postings list
-        value.sort() # sort by doc_id
-    index_items = sorted(index_items) # sort terms
+        value.sort()  # sort by doc_id
+    index_items = sorted(index_items)  # sort terms
     output = open(os.path.join(BLOCKS, output_file), 'wb')
     for item in index_items:
         pickle.dump(item, output)
@@ -209,12 +176,11 @@ def write_block_to_disk(index, output_file):
 
 
 def merge(in_dir, out_dict, out_postings, offset):
-    '''
+    """
     Performs n-way merge, reading limit-number of entries from each block at a time
-    '''
+    """
     global max_len
     limit = 5
-    loops = math.ceil(max_len / limit)
     opened_files = {}
     removed_files = []
 
@@ -274,13 +240,13 @@ def merge(in_dir, out_dict, out_postings, offset):
 
 
 def posting_to_str(posting_list):
-    '''
+    """
     Converts a posting list to string form of docID-termFreq-zones
-    '''
+    """
     result = ''
     for posting in posting_list:
-        zones = ""
-        zones = zones.join(posting[2])
+        separator = ','
+        zones = separator.join(str(posting[2]))
         result += str(posting[0]) + '-' + str(posting[1]) + '-' + zones + ' '
     return result
 
