@@ -6,10 +6,24 @@ import getopt
 import math
 import functools
 import time
+import _pickle as pickle
 from nltk import ngrams
 from nltk.corpus import wordnet as wn
 from data import set_postings_file, read_dict, get_corpus_size, get_doc_id_len_pairs, get_postings_list, get_doc_ids, get_doc_freq, get_main_posting_list
 
+RELEVANT = {}
+
+def get_rel_terms():
+    f = open('rel.txt', 'rb')
+    unpickler = pickle.Unpickler(f)
+    while True:
+        try:
+            entry = unpickler.load()
+            doc_id = entry[0]
+            terms = entry[1]
+            RELEVANT[doc_id] = terms
+        except EOFError:
+            break
 
 def usage():
     print("usage: " + sys.argv[0] + " -d dictionary-file -p postings-file -q file-of-queries -o output-file-of-results")
@@ -29,6 +43,8 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     rf = open(results_file, 'w+')
     rf.write('')
     rf.close()
+    
+    get_rel_terms()
 
     queries = open(queries_file, 'r')
     lines = queries.readlines()

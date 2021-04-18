@@ -51,6 +51,7 @@ def build_index(in_dir, out_dict, out_postings):
     f.close()
     offset = record_doc_length(out_dict, out_postings)
     merge(BLOCKS, out_dict, out_postings, offset)
+    write_rel_to_disk()
     #print(RELEVANT)
 
 def record_doc_length(out_dict, out_postings):
@@ -125,6 +126,7 @@ def spimi_invert(chunk):
                 curr_posting.append(posting_list)
                 index[token] = curr_posting
         DICTIONARY[int(doc_id)] = math.sqrt(doc_len)
+        #print(RELEVANT[doc_id])
     block_count += 1
     output_file = "block" + str(block_count) + ".txt"
     write_block_to_disk(index, output_file)
@@ -137,7 +139,7 @@ def gen_unigram(entry_index, doc_id, section_content, section_words, zone_index)
             tagged_word = pos_tag([word])
             tag = tagged_word[0][1]
             if tag in REL_TAGS:
-                rel_words.add(word)
+                rel_words.add(word.lower())
             tokenized = tokenize(word)
             section_words.append(tokenized)
             if tokenized not in entry_index:
@@ -188,10 +190,9 @@ def write_block_to_disk(index, output_file):
 
 def write_rel_to_disk():
     rel_items = RELEVANT.items()
-    for key, value in rel_items:
-        value.sort()
     output = open('rel.txt', 'wb')
     for item in rel_items:
+        print(item)
         pickle.dump(item, output)
     output.close()
 
