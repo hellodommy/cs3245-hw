@@ -31,10 +31,16 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     rf.close()
 
     queries = open(queries_file, 'r')
-    line = queries.readline()
+    lines = queries.readlines()
+    query = ''
+    rel_docs = []
+    for i in range(len(lines)):
+        if i is 0:
+            query = lines[i].rstrip()
+        else:
+            rel_docs.append(int(lines[i]))
 
     rf = open(results_file, 'a')
-    query = line.rstrip()
     query_terms = parse_query(query)
 
     expand_query_terms = query_expand(query_terms)
@@ -53,6 +59,7 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     print(f"Completed in {end - start:0.4f} seconds")
 
 
+# FIXME: Why is the parsed query a list of list?
 def parse_query(query):
     """
     Example - Query: 'what is "fertility treatment" AND damages'

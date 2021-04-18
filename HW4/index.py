@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import re
+from nltk import pos_tag
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.util import bigrams
 import sys
@@ -17,7 +18,8 @@ block_count = 0  # running count of the number of blocks
 max_len = 0
 BLOCKS = "blocks"
 DICTIONARY = {}  # stores (key, value) as (doc_id, doc_len)
-
+RELEVANT = {}
+REL_TAGS = ['JJ', 'JJR', 'JJS', 'NN', 'NNS', 'NNP', 'NNPS', 'VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ']
 
 def usage():
     print("usage: " +
@@ -49,7 +51,7 @@ def build_index(in_dir, out_dict, out_postings):
     f.close()
     offset = record_doc_length(out_dict, out_postings)
     merge(BLOCKS, out_dict, out_postings, offset)
-
+    #print(RELEVANT)
 
 def record_doc_length(out_dict, out_postings):
     """
@@ -129,8 +131,13 @@ def spimi_invert(chunk):
 
 
 def gen_unigram(entry_index, doc_id, section_content, section_words, zone_index):
+    rel_words = set()
     for word in word_tokenize(section_content):
         if word not in punc:
+            tagged_word = pos_tag([word])
+            tag = tagged_word[0][1]
+            if tag in REL_TAGS:
+                rel_words.add(word)
             tokenized = tokenize(word)
             section_words.append(tokenized)
             if tokenized not in entry_index:
@@ -143,7 +150,12 @@ def gen_unigram(entry_index, doc_id, section_content, section_words, zone_index)
                 zones[zone_index] += 1
                 entry_index[tokenized] = [
                     int(doc_id), curr_count + 1, zones]
-
+    if doc_id not in RELEVANT:
+        RELEVANT[doc_id] = rel_words
+    else:
+        existing_rel_word = RELEVANT[doc_id]
+        existing_rel_word.update(rel_words)
+        RELEVANT[doc_id] = existing_rel_word
 
 def gen_bigram(entry_index, doc_id, section_words, zone_index):
     for entry in list(bigrams(section_words)):
@@ -174,6 +186,14 @@ def write_block_to_disk(index, output_file):
         pickle.dump(item, output)
     output.close()
 
+def write_rel_to_disk():
+    rel_items = RELEVANT.items()
+    for key, value in rel_items:
+        value.sort()
+    output = open('rel.txt', 'wb')
+    for item in rel_items:
+        pickle.dump(item, output)
+    output.close()
 
 def merge(in_dir, out_dict, out_postings, offset):
     """
