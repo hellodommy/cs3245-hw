@@ -21,7 +21,7 @@ def get_rel_terms():
             entry = unpickler.load()
             doc_id = entry[0]
             terms = entry[1]
-            RELEVANT[doc_id] = terms
+            RELEVANT[int(doc_id)] = terms
         except EOFError:
             break
 
@@ -43,8 +43,6 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     rf = open(results_file, 'w+')
     rf.write('')
     rf.close()
-    
-    get_rel_terms()
 
     queries = open(queries_file, 'r')
     lines = queries.readlines()
@@ -60,6 +58,18 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     query_terms = parse_query(query)
 
     expand_query_terms = query_expand(query_terms)
+    
+    get_rel_terms()
+    for rel_doc in rel_docs:
+        impt_terms = RELEVANT[rel_doc]
+        
+        # necessary because query terms are a list of lists
+        for impt_term in impt_terms:
+            query_terms.append([impt_term])
+        
+        # if query_terms were a list of strings, we could instead do:
+        # query_terms.extend(impt_terms)
+    
     query_terms_counts = counter(expand_query_terms)
     doc_scores = calculate_cosine_scores(expand_query_terms, query_terms_counts)
     result_docs = [k for k, v in sorted(doc_scores.items(), key=lambda item: (-item[1], item[0]))]
