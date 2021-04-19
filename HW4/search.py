@@ -14,6 +14,9 @@ from data import set_postings_file, read_dict, get_corpus_size, get_doc_id_len_p
 RELEVANT = {}
 
 def get_rel_terms():
+    '''
+    Retrieves relevant terms for each document from indexing stage
+    '''
     f = open('rel.txt', 'rb')
     unpickler = pickle.Unpickler(f)
     while True:
@@ -61,11 +64,14 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     
     get_rel_terms()
     for rel_doc in rel_docs:
-        impt_terms = RELEVANT[rel_doc]
-        
-        # necessary because query terms are a list of lists
-        for impt_term in impt_terms:
-            query_terms.append([impt_term])
+        try:
+            impt_terms = RELEVANT[rel_doc]
+            
+            # necessary because query terms are a list of lists
+            for impt_term in impt_terms:
+                query_terms.append([impt_term])
+        except KeyError: # doc is not found in relevant term dictionary
+            continue
         
         # if query_terms were a list of strings, we could instead do:
         # query_terms.extend(impt_terms)

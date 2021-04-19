@@ -152,6 +152,7 @@ def gen_unigram(entry_index, doc_id, section_content, section_words, zone_index)
                 zones[zone_index] += 1
                 entry_index[tokenized] = [
                     int(doc_id), curr_count + 1, zones]
+    # Adding relevant terms to relevant dictionary
     if doc_id not in RELEVANT:
         RELEVANT[doc_id] = rel_words
     else:
