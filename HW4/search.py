@@ -65,16 +65,10 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     get_rel_terms()
     for rel_doc in rel_docs:
         try:
-            impt_terms = RELEVANT[rel_doc]
-            
-            # necessary because query terms are a list of lists
-            for impt_term in impt_terms:
-                query_terms.append([impt_term])
+            # the important terms from each relevant doc are placed in one segment together
+            expand_query_terms.append(RELEVANT[rel_doc])
         except KeyError: # doc is not found in relevant term dictionary
             continue
-        
-        # if query_terms were a list of strings, we could instead do:
-        # query_terms.extend(impt_terms)
     
     query_terms_counts = counter(expand_query_terms)
     doc_scores = calculate_cosine_scores(expand_query_terms, query_terms_counts)
