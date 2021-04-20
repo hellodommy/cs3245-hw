@@ -24,7 +24,7 @@ def read_posting(byte_offset, bytes_to_read):
     '''
     Reads specified bytes from the posting list at a byte offset
     '''
-    f = open(POSTINGS_FILE, 'r')
+    f = open(POSTINGS_FILE, 'r', encoding="utf-8")
     result = ''
     f.seek(byte_offset)
     result += f.read(bytes_to_read)
@@ -36,7 +36,7 @@ def read_dict(dict_file):
     Reads dictionary from disk into memory
     '''
     global DICTIONARY, DOC_ID_LEN_PAIRS
-    f = open(dict_file, 'r')
+    f = open(dict_file, 'r', encoding="utf-8")
     for line in f.readlines():
         info = (line.rstrip()).split(' ')
         if info[0] == '*': # encountered special term for all our doc ids

@@ -43,11 +43,11 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     set_postings_file(postings_file)
     read_dict(dict_file)  # read from dictionary file and store in memory
 
-    rf = open(results_file, 'w+')
+    rf = open(results_file, 'w+', encoding="utf-8")
     rf.write('')
     rf.close()
 
-    queries = open(queries_file, 'r')
+    queries = open(queries_file, 'r', encoding="utf-8")
     lines = queries.readlines()
     query = ''
     rel_docs = []
@@ -57,7 +57,7 @@ def run_search(dict_file, postings_file, queries_file, results_file):
         else:
             rel_docs.append(int(lines[i]))
 
-    rf = open(results_file, 'a')
+    rf = open(results_file, 'a', encoding="utf-8")
     query_terms = parse_query(query)
 
     expand_query_terms = query_expand(query_terms)

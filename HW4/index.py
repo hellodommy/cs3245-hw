@@ -201,6 +201,7 @@ def merge(in_dir, out_dict, out_postings, offset):
     """
     Performs n-way merge, reading limit-number of entries from each block at a time
     """
+    print("merge")
     global max_len
     limit = 5
     opened_files = {}
@@ -214,10 +215,9 @@ def merge(in_dir, out_dict, out_postings, offset):
     pq = PriorityQueue()
     for i in range(limit):
         for block_name, file_read in opened_files.items():
-            unpickler = pickle.Unpickler(file_read)
             if block_name not in removed_files:
                 try:
-                    temp_item = list(unpickler.load())
+                    temp_item = list(pickle.load(file_read))
                     # block where the item of (term, docID) is from
                     temp_item.append(block_name)
                     pq.put(temp_item)
