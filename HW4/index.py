@@ -38,16 +38,16 @@ def build_index(in_dir, out_dict, out_postings):
     limit = 20
     os.makedirs(BLOCKS, exist_ok=True)
 
-    with open(in_dir) as csv_file:
+    with open(in_dir, 'r+', encoding="utf-8") as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         doc_list = list(csv_reader)
         doc_list = doc_list[1:]  # ignore header line
         doc_chunks = [doc_list[i * limit:(i + 1) * limit] for i in range((len(doc_list) + limit - 1) // limit)]
         for chunk in doc_chunks:
             spimi_invert(chunk)
-    f = open(out_dict, 'w+')
+    f = open(out_dict, 'w+', encoding="utf-8")
     f.close()
-    f = open(out_postings, 'w+')
+    f = open(out_postings, 'w+', encoding="utf-8")
     f.close()
     offset = record_doc_length(out_dict, out_postings)
     merge(BLOCKS, out_dict, out_postings, offset)
@@ -77,7 +77,7 @@ def write_to_file(file, content):
     """
     Writes out lines to disk for search phase later
     """
-    fw = open(file, 'a')
+    fw = open(file, 'a', encoding="utf-8")
     fw.write(''.join(content))
     fw.close()
 
@@ -193,7 +193,7 @@ def write_rel_to_disk():
     rel_items = RELEVANT.items()
     output = open('rel.txt', 'wb')
     for item in rel_items:
-        print(item)
+        #print(item)
         pickle.dump(item, output)
     output.close()
 
