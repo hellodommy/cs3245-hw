@@ -100,15 +100,18 @@ def get_postings_list(query_term):
         dict_info = DICTIONARY[tokenize(query_term)]
         posting = read_posting(dict_info[1], dict_info[2]).rstrip()
         postings_list = {}
-        for id_len_str_pair in posting.split(' '):
-            id_len_str_split = id_len_str_pair.split('-')
-            zones = id_len_str_split[2].split(',')
+        doc_id_gap_accum = 0
+        for gap_len_str_pair in posting.split(' '):
+            gap_len_str_split = gap_len_str_pair.split('-')
+            zones = gap_len_str_split[2].split(',')
             for i in range(len(zones)):
                 if zones[i] == '':
                     zones[i] = 0
                 else:
                     zones[i] = int(zones[i])
-            postings_list[int(id_len_str_split[0])] = zones
+            doc_id = doc_id_gap_accum + int(gap_len_str_split[0])
+            doc_id_gap_accum += doc_id
+            postings_list[doc_id] = zones
         return postings_list
     except KeyError as error:
         return {}
@@ -121,9 +124,12 @@ def get_intermediate_postings(query_term):
         dict_info = DICTIONARY[tokenize(query_term)]
         posting = read_posting(dict_info[1], dict_info[2]).rstrip()
         postings_list = []
-        for id_len_str_pair in posting.split(' '):
-            id_len_str_split = id_len_str_pair.split('-')
-            postings_list.append(int(id_len_str_split[0]))
+        doc_id_gap_accum = 0
+        for gap_len_str_pair in posting.split(' '):
+            gap_len_str_split = gap_len_str_pair.split('-')
+            doc_id = doc_id_gap_accum + int(gap_len_str_split[0])
+            doc_id_gap_accum += doc_id
+            postings_list.append(doc_id)
         return postings_list
     except KeyError as error:
         return []
