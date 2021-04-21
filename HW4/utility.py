@@ -1,15 +1,17 @@
 from nltk.stem.porter import *
+from nltk.corpus import stopwords
 import string
 import re
 
 punc = string.punctuation
+stop_words = set(stopwords.words('english'))
 
 
 def is_valid(word):
     '''
-    Checks if a word is valid (not punctuation and not foriegn character)
+    Checks if a word is valid (not punctuation and not foriegn character and not stopword)
     '''
-    return word not in punc and not cjk_detect(word)
+    return (word not in punc) and not is_cjk(word) and (word not in stop_words)
 
 
 def tokenize(word):
@@ -25,9 +27,9 @@ def tokenize(word):
         return word
 
 # Taken from https://medium.com/the-artificial-impostor/detecting-chinese-characters-in-unicode-strings-4ac839ba313a
-def cjk_detect(texts):
+def is_cjk(texts):
     '''
-    Detect Chinese, Japanese and Korean words
+    Checks for Chinese, Japanese and Korean words
     '''
     # korean
     if re.search("[\uac00-\ud7a3]", texts):
