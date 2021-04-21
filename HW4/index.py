@@ -309,8 +309,8 @@ def posting_to_str(posting_list):
             if zones_lst[i] == 0:
                 zones_str = separator.join([zones_str, ','])
             else:
-                zones_str = separator.join([zones_str, str(zones_lst[i]), ','])
-        result += str(posting[0]) + '-' + zones_str + ' '
+                zones_str = separator.join([zones_str, str(zones_lst[i]) ,','])
+        result = separator.join([result, str(posting[0]), '-', zones_str, ' '])
     return result
 
 input_directory = output_file_dictionary = output_file_postings = None
