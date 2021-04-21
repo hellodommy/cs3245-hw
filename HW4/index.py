@@ -149,8 +149,7 @@ def gen_unigram(entry_index, doc_id, section_content, section_words, zone_index)
                 curr_count = entry_index[tokenized][1]
                 zones = entry_index[tokenized][2]
                 zones[zone_index] += 1
-                entry_index[tokenized] = [
-                    int(doc_id), curr_count + 1, zones]
+                entry_index[tokenized] = [int(doc_id), curr_count + 1, zones]
     # Adding relevant terms to relevant dictionary
     if doc_id not in RELEVANT:
         RELEVANT[doc_id] = rel_words
@@ -287,10 +286,18 @@ def posting_to_str(posting_list):
     """
     result = ''
     for posting in posting_list:
-        separator = ','
-        zones_lst = [str(integer) for integer in posting[2]]
-        zones_str = separator.join(zones_lst)
-        result += str(posting[0]) + '-' + str(posting[1]) + '-' + zones_str + ' '
+        separator = ''
+        zones_lst = posting[2]
+        zones_str = ''
+        for i in range(len(zones_lst) - 1):
+            if i == len(zones_lst) - 1:
+                if zones_lst[i] != 0:
+                    zones_str = seperator.join([zones_str, str(zones_lst[i])])
+            if zones_lst[i] == 0:
+                zones_str = seperator.join([zones_str, ','])
+            else:
+                zones_str = seperator.join([zones_str, str(zones_lst[i]) ,','])
+        result += str(posting[0]) + '-' + zones_str + ' '
     return result
 
 input_directory = output_file_dictionary = output_file_postings = None

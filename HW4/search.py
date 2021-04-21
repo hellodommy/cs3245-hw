@@ -52,7 +52,7 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     query = ''
     rel_docs = []
     for i in range(len(lines)):
-        if i is 0:
+        if i == 0:
             query = lines[i].rstrip()
         else:
             rel_docs.append(int(lines[i]))
@@ -210,6 +210,8 @@ def calculate_cosine_scores(query_terms, query_terms_counts):
 
     # normalize lengths
     for doc_id, score in scores.items():
+        print(doc_id_len_pairs[doc_id])
+        print(score)
         scores[doc_id] = score / doc_id_len_pairs[doc_id]
 
     return scores

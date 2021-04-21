@@ -103,7 +103,7 @@ def get_postings_list(query_term):
         doc_id_gap_accum = 0
         for gap_len_str_pair in posting.split(' '):
             gap_len_str_split = gap_len_str_pair.split('-')
-            zones = gap_len_str_split[2].split(',')
+            zones = gap_len_str_split[1].split(',')
             for i in range(len(zones)):
                 if zones[i] == '':
                     zones[i] = 0
