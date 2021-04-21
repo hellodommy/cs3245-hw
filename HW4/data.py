@@ -40,10 +40,13 @@ def read_dict(dict_file):
     for line in f.readlines():
         info = (line.rstrip()).split(' ')
         if info[0] == '*': # encountered special term for all our doc ids
-            doc_ids_w_length = read_posting(int(info[2]), int(info[3])).rstrip().split(' ')
-            for id_len_str_pair in doc_ids_w_length:
-                id_len_str_split = id_len_str_pair.split('-')
-                DOC_ID_LEN_PAIRS[int(id_len_str_split[0])] = float(id_len_str_split[1])
+            doc_id_gaps_w_length = read_posting(int(info[2]), int(info[3])).rstrip().split(' ')
+            doc_ids_gap_accum = 0
+            for gap_len_str_pair in doc_id_gaps_w_length:
+                gap_len_str_split = gap_len_str_pair.split('-')
+                doc_id = doc_ids_gap_accum + int(gap_len_str_split[0])
+                doc_ids_gap_accum += doc_id
+                DOC_ID_LEN_PAIRS[doc_id] = float(gap_len_str_split[1])
             continue
         # term: [doc_freq, absolute_offset, accumulative_offset]
         DICTIONARY[info[0]] = [int(info[1]), int(info[2]), int(info[3])]
@@ -100,11 +103,18 @@ def get_postings_list(query_term):
         dict_info = DICTIONARY[tokenize(query_term)]
         posting = read_posting(dict_info[1], dict_info[2]).rstrip()
         postings_list = {}
-        for id_len_str_pair in posting.split(' '):
-            id_len_str_split = id_len_str_pair.split('-')
-            zones = id_len_str_split[2].split(',')
-            zones = [int(integer) for integer in zones]
-            postings_list[int(id_len_str_split[0])] = zones
+        doc_id_gap_accum = 0
+        for gap_len_str_pair in posting.split(' '):
+            gap_len_str_split = gap_len_str_pair.split('-')
+            zones = gap_len_str_split[1].split(',')
+            for i in range(len(zones)):
+                if zones[i] == '':
+                    zones[i] = 0
+                else:
+                    zones[i] = int(zones[i])
+            doc_id = doc_id_gap_accum + int(gap_len_str_split[0])
+            doc_id_gap_accum += doc_id
+            postings_list[doc_id] = zones
         return postings_list
     except KeyError as error:
         return {}
@@ -117,9 +127,12 @@ def get_intermediate_postings(query_term):
         dict_info = DICTIONARY[tokenize(query_term)]
         posting = read_posting(dict_info[1], dict_info[2]).rstrip()
         postings_list = []
-        for id_len_str_pair in posting.split(' '):
-            id_len_str_split = id_len_str_pair.split('-')
-            postings_list.append(int(id_len_str_split[0]))
+        doc_id_gap_accum = 0
+        for gap_len_str_pair in posting.split(' '):
+            gap_len_str_split = gap_len_str_pair.split('-')
+            doc_id = doc_id_gap_accum + int(gap_len_str_split[0])
+            doc_id_gap_accum += doc_id
+            postings_list.append(doc_id)
         return postings_list
     except KeyError as error:
         return []
