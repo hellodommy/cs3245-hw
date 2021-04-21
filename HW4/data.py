@@ -103,7 +103,11 @@ def get_postings_list(query_term):
         for id_len_str_pair in posting.split(' '):
             id_len_str_split = id_len_str_pair.split('-')
             zones = id_len_str_split[2].split(',')
-            zones = [int(integer) for integer in zones]
+            for i in range(len(zones)):
+                if zones[i] == '':
+                    zones[i] = 0
+                else:
+                    zones[i] = int(zones[i])
             postings_list[int(id_len_str_split[0])] = zones
         return postings_list
     except KeyError as error:
