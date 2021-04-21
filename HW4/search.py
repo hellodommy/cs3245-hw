@@ -89,7 +89,7 @@ def parse_query(query):
     '''
     Example - Query: 'what is "fertility treatment" AND damages'
     Output - [['what', 'is', 'fertility_treatment'], ['damages']]
-    ''''
+    '''
     parsed_terms = []
     query_terms = [term.split(' ') for term in query.split(' AND ')]
     is_quote = False

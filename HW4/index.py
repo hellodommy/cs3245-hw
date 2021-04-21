@@ -11,7 +11,7 @@ import csv
 import _pickle as pickle
 import math
 from queue import PriorityQueue
-from utility import tokenize
+from utility import tokenize, is_valid
 
 punc = string.punctuation
 block_count = 0  # running count of the number of blocks
@@ -60,8 +60,11 @@ def record_doc_length(out_dict, out_postings):
     global DICTIONARY
     result = ''
 
+    accum = 0 # for gap encoding
     for doc_id, doc_len in sorted(DICTIONARY.items()):
-        result += str(doc_id) + '-' + str(doc_len) + ' '
+        gap = doc_id - accum
+        result += str(gap) + '-' + str(doc_len) + ' '
+        accum += gap
 
     # (doc_frequency, absolute_offset, accumulative_offset)
     dict_expr = "* 0 0 " + str(len(result)) + "\n"
@@ -137,7 +140,7 @@ def gen_unigram(entry_index, doc_id, section_content, section_words, zone_index)
     '''
     rel_words = set()
     for word in word_tokenize(section_content):
-        if word not in punc:
+        if is_valid(word):
             tagged_word = pos_tag([word])
             tag = tagged_word[0][1]
             if tag in REL_TAGS:
@@ -166,16 +169,17 @@ def gen_bigram(entry_index, doc_id, section_words, zone_index):
     Generates bigrams based on given text
     '''
     for entry in list(bigrams(section_words)):
-        bigram = entry[0] + "_" + entry[1]
-        if bigram not in entry_index:
-            zones = [0, 0, 0, 0]
-            zones[zone_index] += 1
-            entry_index[bigram] = [int(doc_id), 1, zones]
-        else:
-            curr_count = entry_index[bigram][1]
-            zones = entry_index[bigram][2]
-            zones[zone_index] += 1
-            entry_index[bigram] = [int(doc_id), curr_count + 1, zones]
+        if is_valid(entry[0]) and is_valid(entry[1]):
+            bigram = tokenize(entry[0]) + "_" + tokenize(entry[1])
+            if bigram not in entry_index:
+                zones = [0, 0, 0, 0]
+                zones[zone_index] += 1
+                entry_index[bigram] = [int(doc_id), 1, zones]
+            else:
+                curr_count = entry_index[bigram][1]
+                zones = entry_index[bigram][2]
+                zones[zone_index] += 1
+                entry_index[bigram] = [int(doc_id), curr_count + 1, zones]
 
 
 def write_block_to_disk(index, output_file):
