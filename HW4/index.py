@@ -26,10 +26,10 @@ def usage():
 
 
 def build_index(in_dir, out_dict, out_postings):
-    """
+    '''
     Builds index from documents stored in the input directory,
     then output the dictionary file and postings file
-    """
+    '''
     print('indexing...')
     # This is an empty method
     # Pls implement your code in below
@@ -54,9 +54,9 @@ def build_index(in_dir, out_dict, out_postings):
     #print(RELEVANT)
 
 def record_doc_length(out_dict, out_postings):
-    """
+    '''
     Records docIDs and their respective normalised doc lengths
-    """
+    '''
     global DICTIONARY
     result = ''
 
@@ -73,21 +73,21 @@ def record_doc_length(out_dict, out_postings):
 
 
 def write_to_file(file, content):
-    """
+    '''
     Writes out lines to disk for search phase later
-    """
+    '''
     fw = open(file, 'a', encoding="utf-8")
     fw.write(''.join(content))
     fw.close()
 
 
 def spimi_invert(chunk):
-    """
+    '''
     Executes SPIMI Invert algorithm for each chunk of documents
     For each chunk, store a master index
     For each entry in the chunk, collect term frequencies and calculate the weights (for normalised doc length)
     Add [doc id, term freq] to the master index and log the normalised document length
-    """
+    '''
     global block_count, DICTIONARY
     print('block:', block_count)
     index = {}  # index for the whole chunk
@@ -132,6 +132,9 @@ def spimi_invert(chunk):
 
 
 def gen_unigram(entry_index, doc_id, section_content, section_words, zone_index):
+    '''
+    Generates unigrams based on given text
+    '''
     rel_words = set()
     for word in word_tokenize(section_content):
         if word not in punc:
@@ -159,6 +162,9 @@ def gen_unigram(entry_index, doc_id, section_content, section_words, zone_index)
         RELEVANT[doc_id] = existing_rel_word
 
 def gen_bigram(entry_index, doc_id, section_words, zone_index):
+    '''
+    Generates bigrams based on given text
+    '''
     for entry in list(bigrams(section_words)):
         bigram = entry[0] + "_" + entry[1]
         if bigram not in entry_index:
@@ -173,9 +179,9 @@ def gen_bigram(entry_index, doc_id, section_words, zone_index):
 
 
 def write_block_to_disk(index, output_file):
-    """
+    '''
     Writes out a block to disk in /blocks folder
-    """
+    '''
     global max_len
     index_items = index.items()
     max_len = max(max_len, len(index_items))
@@ -188,6 +194,9 @@ def write_block_to_disk(index, output_file):
     output.close()
 
 def write_rel_to_disk():
+    '''
+    Writes the dictionary of relevant terms for each document to disk
+    '''
     rel_items = RELEVANT.items()
     output = open('rel.txt', 'wb')
     for item in rel_items:
@@ -196,9 +205,9 @@ def write_rel_to_disk():
     output.close()
 
 def merge(in_dir, out_dict, out_postings, offset):
-    """
+    '''
     Performs n-way merge, reading limit-number of entries from each block at a time
-    """
+    '''
     print("merge")
     global max_len
     limit = 5
@@ -266,7 +275,7 @@ def gap_encoding(posting_list):
     Example input: [[247336, 1, [0, 1, 0, 0]], [247336, 1, [0, 1, 0, 0]], [2140544, 1, [0, 1, 0, 0]]]
     '''
     # print('initial posting')
-    # print(posting_list)
+    # print(posting_list, '\n')
     final_posting = []
     accum = 0
     for posting in posting_list:
@@ -281,9 +290,9 @@ def gap_encoding(posting_list):
 
 
 def posting_to_str(posting_list):
-    """
+    '''
     Converts a posting list to string form of docID-termFreq-zones
-    """
+    '''
     result = ''
     for posting in posting_list:
         separator = ''
@@ -292,11 +301,11 @@ def posting_to_str(posting_list):
         for i in range(len(zones_lst) - 1):
             if i == len(zones_lst) - 1:
                 if zones_lst[i] != 0:
-                    zones_str = seperator.join([zones_str, str(zones_lst[i])])
+                    zones_str = separator.join([zones_str, str(zones_lst[i])])
             if zones_lst[i] == 0:
-                zones_str = seperator.join([zones_str, ','])
+                zones_str = separator.join([zones_str, ','])
             else:
-                zones_str = seperator.join([zones_str, str(zones_lst[i]) ,','])
+                zones_str = separator.join([zones_str, str(zones_lst[i]), ','])
         result += str(posting[0]) + '-' + zones_str + ' '
     return result
 

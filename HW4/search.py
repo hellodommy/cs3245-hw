@@ -33,11 +33,11 @@ def usage():
 
 
 def run_search(dict_file, postings_file, queries_file, results_file):
-    """
+    '''
     Uses the given dictionary file and postings file
     to perform searching on the given queries file and
     output the results to a file
-    """
+    '''
     start = time.perf_counter()
     print('running search on the queries...')
     set_postings_file(postings_file)
@@ -85,12 +85,11 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     print(f"Completed in {end - start:0.4f} seconds")
 
 
-# FIXME: Why is the parsed query a list of list?
 def parse_query(query):
-    """
+    '''
     Example - Query: 'what is "fertility treatment" AND damages'
     Output - [['what', 'is', 'fertility_treatment'], ['damages']]
-    """
+    ''''
     parsed_terms = []
     query_terms = [term.split(' ') for term in query.split(' AND ')]
     is_quote = False
@@ -139,9 +138,9 @@ def query_expand(parsed_terms):
 
 
 def calculate_tfidf_query(term, term_freq_in_query, corpus_size):
-    """
+    '''
     Calculates the tf-idf (ltc) for a query
-    """
+    '''
     if term_freq_in_query == 0:
         return 0
     doc_freq = get_doc_freq(term)
@@ -154,9 +153,9 @@ def calculate_tfidf_query(term, term_freq_in_query, corpus_size):
 
 
 def calculate_tfidf_documents(zone):
-    """
+    '''
     Calculates the tf-idf (lnc) for a document
-    """
+    '''
     # title (0), content (1), date (2), court (3)
     alpha = [0.470588, 0.176471, 0.117647, 0.235294]
     result = 0
@@ -190,9 +189,9 @@ def counter(query_terms):
 
 
 def calculate_cosine_scores(query_terms, query_terms_counts):
-    """
+    '''
     Returns a `scores` dictionary where the keys are doc IDs and the values are the cosine scores
-    """
+    '''
     corpus_size = get_corpus_size()
     doc_id_len_pairs = get_doc_id_len_pairs()
 
