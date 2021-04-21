@@ -22,8 +22,7 @@ RELEVANT = {}
 REL_TAGS = ['JJ', 'JJR', 'JJS', 'NN', 'NNS', 'NNP', 'NNPS', 'VB', 'VBD', 'VBG', 'VBN', 'VBP', 'VBZ']
 
 def usage():
-    print("usage: " +
-          sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
+    print("usage: " + sys.argv[0] + " -i directory-of-documents -d dictionary-file -p postings-file")
 
 
 def build_index(in_dir, out_dict, out_postings):
@@ -125,7 +124,7 @@ def spimi_invert(chunk):
                 curr_posting = index[token]
                 curr_posting.append(posting_list)
                 index[token] = curr_posting
-        DICTIONARY[int(doc_id)] = math.sqrt(doc_len)
+        DICTIONARY[int(doc_id)] = float("{:.2f}".format(math.sqrt(doc_len)))
         #print(RELEVANT[doc_id])
     block_count += 1
     output_file = "block" + str(block_count) + ".txt"
@@ -226,6 +225,7 @@ def merge(in_dir, out_dict, out_postings, offset):
 
     term_to_write = ''
     posting_list_to_write = []
+
     while not pq.empty():
         item = pq.get()
         term, posting_list, block_name = item[0], item[1], item[2]
@@ -234,6 +234,7 @@ def merge(in_dir, out_dict, out_postings, offset):
             posting_list_to_write = posting_list
         elif term_to_write != term:  # time to write our current term to to disk because we encountered a new term
             posting_list_to_write.sort()
+            posting_list_to_write = gap_encoding(posting_list_to_write)
             posting_list_str = posting_to_str(posting_list_to_write)
 
             # (doc_frequency, absolute_offset, accumulative_offset)
@@ -259,6 +260,25 @@ def merge(in_dir, out_dict, out_postings, offset):
                 pq.put(temp_item)
             except EOFError as error:
                 removed_files.append(block_name)
+
+def gap_encoding(posting_list):
+    '''
+    Compresses posting list by adopting gap encoding for doc-IDs
+    Example input: [[247336, 1, [0, 1, 0, 0]], [247336, 1, [0, 1, 0, 0]], [2140544, 1, [0, 1, 0, 0]]]
+    '''
+    # print('initial posting')
+    # print(posting_list)
+    final_posting = []
+    accum = 0
+    for posting in posting_list:
+        doc_id = posting[0]
+        gap = doc_id - accum
+        final_posting.append([gap, posting[1], posting[2]])
+        accum += gap
+    return final_posting
+    # print('after gap encoding')
+    # print(final_posting)
+    # print('\n')
 
 
 def posting_to_str(posting_list):
