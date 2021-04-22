@@ -166,6 +166,7 @@ def gen_unigram(entry_index, doc_id, section_content, section_words, zone_index)
         existing_rel_word.update(rel_words)
         RELEVANT[doc_id] = existing_rel_word
 
+
 def gen_bigram(entry_index, doc_id, section_words, zone_index):
     '''
     Generates bigrams based on given text
@@ -199,6 +200,7 @@ def write_block_to_disk(index, output_file):
         pickle.dump(item, output)
     output.close()
 
+
 def write_rel_to_disk():
     '''
     Writes the dictionary of relevant terms for each document to disk
@@ -206,9 +208,9 @@ def write_rel_to_disk():
     rel_items = RELEVANT.items()
     output = open('rel.txt', 'wb')
     for item in rel_items:
-        #print(item)
         pickle.dump(item, output)
     output.close()
+
 
 def merge(in_dir, out_dict, out_postings, offset):
     '''
@@ -274,6 +276,7 @@ def merge(in_dir, out_dict, out_postings, offset):
                 pq.put(temp_item)
             except EOFError as error:
                 removed_files.append(block_name)
+
 
 def gap_encoding(posting_list):
     '''

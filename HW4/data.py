@@ -8,17 +8,21 @@ def get_doc_ids():
     global DOC_ID_LEN_PAIRS
     return DOC_ID_LEN_PAIRS.keys()
 
+
 def get_doc_lengths():
     global DOC_ID_LEN_PAIRS
     return DOC_ID_LEN_PAIRS.values()
+
 
 def get_doc_id_len_pairs():
     global DOC_ID_LEN_PAIRS
     return DOC_ID_LEN_PAIRS
 
+
 def set_postings_file(postings_file):
     global POSTINGS_FILE
     POSTINGS_FILE = postings_file
+
 
 def read_posting(byte_offset, bytes_to_read):
     '''
@@ -30,6 +34,7 @@ def read_posting(byte_offset, bytes_to_read):
     result += f.read(bytes_to_read)
     f.close()
     return result
+
 
 def read_dict(dict_file):
     '''
@@ -53,6 +58,7 @@ def read_dict(dict_file):
     assert '*' not in DICTIONARY
     f.close()
 
+
 def get_doc_freq(term):
     '''
     Returns document frequency for the term
@@ -62,7 +68,11 @@ def get_doc_freq(term):
     except KeyError as error:
         return 0
 
+
 def or_op(pl_1, pl_2):
+    '''
+    Returns the union of pl_1 and pl_2 (as a sorted array)
+    '''
     if len(pl_1) == 0:
         return pl_2
     elif len(pl_2) == 0:
@@ -77,6 +87,9 @@ def or_op(pl_1, pl_2):
 
 
 def and_op(pl_1, pl_2):
+    '''
+    Returns the intersection of pl_1 and pl_2 (as a sorted array)
+    '''
     result = []
     len1 = len(pl_1)
     len2 = len(pl_2)
@@ -94,8 +107,8 @@ def and_op(pl_1, pl_2):
 
     return result
 
+
 def get_postings_list(query_term):
-    #[[ha, ha, ha, This is cold], [This is hot]]
     '''
     Returns postings list for the term (as a dictionary)
     '''
@@ -119,6 +132,7 @@ def get_postings_list(query_term):
     except KeyError as error:
         return {}
 
+
 def get_intermediate_postings(query_term):
     '''
     Returns doc_ids for the term (as an array)
@@ -137,7 +151,11 @@ def get_intermediate_postings(query_term):
     except KeyError as error:
         return []
 
+
 def get_main_posting_list(query_terms):
+    '''
+    Returns the final array of document ids without ranking
+    '''
     main_posting_list = []
     #[[ha, ah, ha2, This is cold], [This is hot]]
     for segment in query_terms:
