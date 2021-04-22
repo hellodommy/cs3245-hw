@@ -139,14 +139,14 @@ def gen_unigram(entry_index, doc_id, section_content, section_words, zone_index)
     '''
     Generates unigrams based on given text
     '''
-    rel_words = set()
+    rel_words = []
     for word in word_tokenize(section_content):
         if is_valid(word):
             tagged_word = pos_tag([word])
             tag = tagged_word[0][1]
-            if tag in REL_TAGS:
-                rel_words.add(word.lower())
             tokenized = tokenize(word)
+            if tag in REL_TAGS and tokenized not in rel_words:
+                rel_words.append(tokenized)
             section_words.append(tokenized)
             if tokenized not in entry_index:
                 zones = [0, 0, 0, 0]
@@ -162,7 +162,9 @@ def gen_unigram(entry_index, doc_id, section_content, section_words, zone_index)
         RELEVANT[doc_id] = rel_words
     else:
         existing_rel_word = RELEVANT[doc_id]
-        existing_rel_word.update(rel_words)
+        for word in rel_words:
+            if word not in existing_rel_word:
+                existing_rel_word.append(word)
         RELEVANT[doc_id] = existing_rel_word
 
 
@@ -189,6 +191,7 @@ def trim_rel_dict_entry(doc_id, entry_index):
     Trims the relevant terms for the given document to the top 5
     '''
     terms = RELEVANT[doc_id]
+
     num_terms = len(terms)
 
     # use tf calculation to rank the terms
