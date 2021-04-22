@@ -117,6 +117,9 @@ def parse_query(query):
 
 
 def generate_syn(prev_value, next_value):
+    '''
+    Generates synonyms (a function use in reduce function in query_expand())
+    '''
     name = next_value.name()
     if name not in prev_value:
         prev_value.append(name)
@@ -124,6 +127,9 @@ def generate_syn(prev_value, next_value):
 
 
 def query_expand(parsed_terms):
+    '''
+    Add the synonyms of each term into the list for query expansion
+    '''
     expanded_query_terms = []
     for segment in parsed_terms:
         segment_terms = []
@@ -168,6 +174,9 @@ def calculate_tfidf_documents(zone):
 
 
 def add_to_count(term, dictionary):
+    '''
+    Increases the query term frequency
+    '''
     if term in dictionary:
         dictionary[term] += 1
     else:
@@ -175,6 +184,9 @@ def add_to_count(term, dictionary):
 
 
 def counter(query_terms):
+    '''
+    Returns the query term frequency (as a dictionary)
+    '''
     count_dict = {}
     for segment in query_terms:
         for term in segment:
