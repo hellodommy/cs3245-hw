@@ -5,7 +5,6 @@ import sys
 import getopt
 import math
 import functools
-import time
 import _pickle as pickle
 from nltk import ngrams
 from nltk.corpus import wordnet as wn
@@ -38,7 +37,6 @@ def run_search(dict_file, postings_file, queries_file, results_file):
     to perform searching on the given queries file and
     output the results to a file
     '''
-    start = time.perf_counter()
     print('running search on the queries...')
     set_postings_file(postings_file)
     read_dict(dict_file)  # read from dictionary file and store in memory
@@ -81,8 +79,6 @@ def run_search(dict_file, postings_file, queries_file, results_file):
             rf.write(str(result_docs[i]) + ' ')
 
     rf.close()
-    end = time.perf_counter()
-    print(f"Completed in {end - start:0.4f} seconds")
 
 
 def parse_query(query):

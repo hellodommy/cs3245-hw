@@ -5,7 +5,6 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.util import bigrams
 import sys
 import getopt
-import time
 import string
 import os
 import csv
@@ -32,7 +31,6 @@ def build_index(in_dir, out_dict, out_postings):
     then output the dictionary file and postings file
     '''
     print('indexing...')
-    start = time.perf_counter()
     # This is an empty method
     # Pls implement your code in below
     csv.field_size_limit(sys.maxsize)
@@ -53,8 +51,7 @@ def build_index(in_dir, out_dict, out_postings):
     offset = record_doc_length(out_dict, out_postings)
     merge(BLOCKS, out_dict, out_postings)
     write_rel_to_disk()
-    end = time.perf_counter()
-    print(f"Completed in {end - start:0.4f} seconds")
+
 
 def record_doc_length(out_dict, out_postings):
     '''
