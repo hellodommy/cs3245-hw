@@ -221,9 +221,10 @@ def calculate_cosine_scores(query_terms, query_terms_counts):
 
     # normalize lengths
     for doc_id, score in scores.items():
-        print(doc_id_len_pairs[doc_id])
-        print(score)
-        scores[doc_id] = score / doc_id_len_pairs[doc_id]
+        try:
+            scores[doc_id] = score / doc_id_len_pairs[doc_id]
+        except KeyError: # If document not found (unlikely)
+            scores[doc_id] = 0
 
     return scores
 

@@ -51,7 +51,7 @@ def build_index(in_dir, out_dict, out_postings):
     f = open(out_postings, 'w+', encoding="utf-8")
     f.close()
     offset = record_doc_length(out_dict, out_postings)
-    merge(BLOCKS, out_dict, out_postings, offset)
+    merge(BLOCKS, out_dict, out_postings)
     write_rel_to_disk()
     end = time.perf_counter()
     print(f"Completed in {end - start:0.4f} seconds")
@@ -70,12 +70,10 @@ def record_doc_length(out_dict, out_postings):
         accum += gap
 
     # (doc_frequency, absolute_offset, accumulative_offset)
-    dict_expr = "* 0 0 " + str(len(result)) + "\n"
+    dict_expr = "* 0 " + str(len(result)) + "\n"
 
     write_to_file(out_dict, dict_expr)
     write_to_file(out_postings, result)
-
-    return len(result)
 
 
 def write_to_file(file, content):
@@ -212,7 +210,7 @@ def write_rel_to_disk():
     output.close()
 
 
-def merge(in_dir, out_dict, out_postings, offset):
+def merge(in_dir, out_dict, out_postings):
     '''
     Performs n-way merge, reading limit-number of entries from each block at a time
     '''
@@ -242,7 +240,6 @@ def merge(in_dir, out_dict, out_postings, offset):
     term_to_write = ''
     posting_list_to_write = []
 
-    accum = 0
     while not pq.empty():
         item = pq.get()
         term, posting_list, block_name = item[0], item[1], item[2]
@@ -256,15 +253,11 @@ def merge(in_dir, out_dict, out_postings, offset):
 
             # (doc_frequency, absolute_offset, accumulative_offset)
 
-            gap = offset - accum
 
-            dict_entry = term_to_write + " " + str(len(posting_list_to_write)) + " " + str(gap) + " " + str(len(posting_list_str)) + "\n"
+            dict_entry = term_to_write + " " + str(len(posting_list_to_write)) + " " + str(len(posting_list_str)) + "\n"
             write_to_file(out_dict, dict_entry)
             write_to_file(out_postings, posting_list_str)
             
-            accum += gap
-            offset += len(posting_list_str)
-
             # resetting variables for new term
             term_to_write = term
             posting_list_to_write = posting_list
