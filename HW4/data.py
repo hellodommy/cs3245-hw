@@ -42,6 +42,7 @@ def read_dict(dict_file):
     '''
     global DICTIONARY, DOC_ID_LEN_PAIRS
     f = open(dict_file, 'r', encoding="utf-8")
+    accum = 0
     for line in f.readlines():
         info = (line.rstrip()).split(' ')
         if info[0] == '*': # encountered special term for all our doc ids
@@ -54,9 +55,12 @@ def read_dict(dict_file):
                 DOC_ID_LEN_PAIRS[doc_id] = float(gap_len_str_split[1])
             continue
         # term: [doc_freq, absolute_offset, accumulative_offset]
-        DICTIONARY[info[0]] = [int(info[1]), int(info[2]), int(info[3])]
+        abs_offset = accum + int(info[2])
+        accum = accum + int(info[2])
+        DICTIONARY[info[0]] = [int(info[1]), abs_offset, int(info[3])]
     assert '*' not in DICTIONARY
     f.close()
+    print(DICTIONARY)
 
 
 def get_doc_freq(term):

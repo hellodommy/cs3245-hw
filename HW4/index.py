@@ -242,6 +242,7 @@ def merge(in_dir, out_dict, out_postings, offset):
     term_to_write = ''
     posting_list_to_write = []
 
+    accum = 0
     while not pq.empty():
         item = pq.get()
         term, posting_list, block_name = item[0], item[1], item[2]
@@ -254,11 +255,14 @@ def merge(in_dir, out_dict, out_postings, offset):
             posting_list_str = posting_to_str(posting_list_to_write)
 
             # (doc_frequency, absolute_offset, accumulative_offset)
-            dict_entry = term_to_write + " " + str(len(posting_list_to_write)) + " " + str(
-                offset) + " " + str(len(posting_list_str)) + "\n"
+
+            gap = offset - accum
+
+            dict_entry = term_to_write + " " + str(len(posting_list_to_write)) + " " + str(gap) + " " + str(len(posting_list_str)) + "\n"
             write_to_file(out_dict, dict_entry)
             write_to_file(out_postings, posting_list_str)
-
+            
+            accum += gap
             offset += len(posting_list_str)
 
             # resetting variables for new term
