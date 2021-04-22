@@ -129,6 +129,7 @@ def spimi_invert(chunk):
                 curr_posting.append(posting_list)
                 index[token] = curr_posting
         DICTIONARY[int(doc_id)] = float("{:.2f}".format(math.sqrt(doc_len)))
+        trim_rel_dict_entry(doc_id, entry_index)
     block_count += 1
     output_file = "block" + str(block_count) + ".txt"
     write_block_to_disk(index, output_file)
@@ -181,6 +182,29 @@ def gen_bigram(entry_index, doc_id, section_words, zone_index):
                 zones = entry_index[bigram][2]
                 zones[zone_index] += 1
                 entry_index[bigram] = [int(doc_id), curr_count + 1, zones]
+
+
+def trim_rel_dict_entry(doc_id, entry_index):
+    '''
+    Trims the relevant terms for the given document to the top 5
+    '''
+    terms = RELEVANT[doc_id]
+    num_terms = len(terms)
+
+    # use tf calculation to rank the terms
+    tf_scores = {}
+    for term in terms:
+        # example of entry_index entry: 'court': [246407, 3, [0, 2, 0, 1]]
+        term_freq = entry_index[term][1]
+        tf_scores[term] = 1 + math.log(term_freq, 10)
+    
+    tf_scores.update((term, score / num_terms) for term, score in tf_scores.items())
+
+    # sort tf_scores from highest to lowest
+    sorted_tf_scores = dict(sorted(tf_scores.items(), key=lambda item: item[1], reverse=True))
+
+    # trim relevant dictionary entry to top 5 scoring items
+    RELEVANT[doc_id] = list(sorted_tf_scores.keys())[:5]
 
 
 def write_block_to_disk(index, output_file):
