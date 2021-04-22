@@ -5,6 +5,7 @@ from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk.util import bigrams
 import sys
 import getopt
+import time
 import string
 import os
 import csv
@@ -31,6 +32,7 @@ def build_index(in_dir, out_dict, out_postings):
     then output the dictionary file and postings file
     '''
     print('indexing...')
+    start = time.perf_counter()
     # This is an empty method
     # Pls implement your code in below
     csv.field_size_limit(sys.maxsize)
@@ -51,7 +53,8 @@ def build_index(in_dir, out_dict, out_postings):
     offset = record_doc_length(out_dict, out_postings)
     merge(BLOCKS, out_dict, out_postings, offset)
     write_rel_to_disk()
-    #print(RELEVANT)
+    end = time.perf_counter()
+    print(f"Completed in {end - start:0.4f} seconds")
 
 def record_doc_length(out_dict, out_postings):
     '''
@@ -128,7 +131,6 @@ def spimi_invert(chunk):
                 curr_posting.append(posting_list)
                 index[token] = curr_posting
         DICTIONARY[int(doc_id)] = float("{:.2f}".format(math.sqrt(doc_len)))
-        #print(RELEVANT[doc_id])
     block_count += 1
     output_file = "block" + str(block_count) + ".txt"
     write_block_to_disk(index, output_file)
@@ -278,8 +280,6 @@ def gap_encoding(posting_list):
     Compresses posting list by adopting gap encoding for doc-IDs
     Example input: [[247336, 1, [0, 1, 0, 0]], [247336, 1, [0, 1, 0, 0]], [2140544, 1, [0, 1, 0, 0]]]
     '''
-    # print('initial posting')
-    # print(posting_list, '\n')
     final_posting = []
     accum = 0
     for posting in posting_list:
@@ -288,9 +288,6 @@ def gap_encoding(posting_list):
         final_posting.append([gap, posting[1], posting[2]])
         accum += gap
     return final_posting
-    # print('after gap encoding')
-    # print(final_posting)
-    # print('\n')
 
 
 def posting_to_str(posting_list):
